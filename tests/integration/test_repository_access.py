@@ -13,7 +13,7 @@ import json
 class TestRepositoryAccess:
     """Test repository access controls and security configurations."""
     
-    REPO_NAME = "gidorah/iss-data-analytics-system"
+    REPO_NAME = os.getenv("GITHUB_REPOSITORY", "gidorah/iss-data-analytics-system")
     
     def test_repository_exists_and_accessible(self):
         """Test that the repository exists and is accessible."""
