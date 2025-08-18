@@ -30,17 +30,17 @@ This task creates the secure foundation for the entire project by establishing p
 *I want* to create a new GitHub repository with proper branch protection and collaboration settings  
 *So that* the development team can collaborate securely on the ingestion service codebase with proper version control
 
-**T002-FR04 - CI/CD Pipeline Bootstrap**
+**T002-FR04 - Simple CI/CD Pipeline Bootstrap**
 *As a* DevOps Engineer  
-*I want* to enable GitHub Actions with the necessary secrets and permissions configured  
-*So that* automated testing, building, and deployment workflows can be executed securely without manual intervention
+*I want* to configure GitHub Actions for testing with Coolify webhook deployment triggers  
+*So that* tests run automatically and successful builds trigger direct Git-based deployment without registry complexity
 
 #### 2.3 Security and Secrets Management
 
-**T002-FR05 - Deployment Secrets Configuration**
+**T002-FR05 - Essential Deployment Secrets Configuration**
 *As a* Security Engineer  
-*I want* to configure required deployment secrets (Coolify API tokens, registry credentials) in GitHub Actions  
-*So that* the CI/CD pipeline can authenticate and deploy to the target environment without exposing sensitive credentials
+*I want* to configure minimal required deployment secrets (Coolify webhook URL and API token) in GitHub Actions  
+*So that* the CI/CD pipeline can trigger direct Git deployment securely without unnecessary credential complexity
 
 **T002-FR06 - Access Control Validation**
 *As a* Security Engineer  
@@ -53,6 +53,13 @@ This task creates the secure foundation for the entire project by establishing p
 *As a* DevOps Engineer  
 *I want* to configure Coolify's automatic SSL certificate management with Let's Encrypt  
 *So that* the ingestion service endpoints are secured with HTTPS without manual certificate management overhead
+
+#### 2.5 Direct Git Deployment Integration
+
+**T002-FR08 - Git Repository Direct Deployment**
+*As a* DevOps Engineer  
+*I want* to configure Coolify for direct Git repository deployment using Nixpacks or Dockerfile  
+*So that* the service builds and deploys directly from source code without registry dependencies or additional complexity
 
 ### 3. Acceptance Criteria (Gherkin Syntax)
 
@@ -146,26 +153,25 @@ Feature: CI/CD Pipeline Bootstrap
     And workflows should have access to configured secrets
 ```
 
-#### T002-FR05 - Deployment Secrets Configuration
+#### T002-FR05 - Essential Deployment Secrets Configuration
 ```gherkin
-Feature: Deployment Secrets Configuration
+Feature: Essential Deployment Secrets Configuration
   As a Security Engineer
-  I want to configure deployment secrets securely
-  So that CI/CD can deploy without exposing credentials
+  I want to configure minimal deployment secrets securely
+  So that CI/CD can deploy without exposing credentials or unnecessary complexity
 
   Scenario: Required secrets configuration
     Given I have access to GitHub repository settings
-    When I configure the required deployment secrets
-    Then COOLIFY_API_TOKEN should be securely stored
-    And REGISTRY_USERNAME should be configured if using private registry
-    And REGISTRY_PASSWORD should be configured if using private registry
+    When I configure the essential deployment secrets
+    Then COOLIFY_WEBHOOK should be securely stored
+    And COOLIFY_TOKEN should be securely stored
     And all secrets should be masked in workflow logs
 
   Scenario: Secret access validation
     Given deployment secrets are configured
     When I run a test workflow that accesses secrets
-    Then the workflow should successfully authenticate to Coolify
-    And the workflow should successfully authenticate to container registry
+    Then the workflow should successfully trigger Coolify webhook
+    And the workflow should successfully authenticate to Coolify API
     And no secret values should appear in logs or output
 ```
 
@@ -187,7 +193,7 @@ Feature: Access Control Validation
     Given CI/CD secrets are configured
     When I validate the deployment permissions
     Then Coolify API access should be limited to the specific project
-    And container registry access should be limited to the specific namespace
+    And webhook access should be limited to deployment triggers only
     And no unnecessary administrative privileges should be granted
 ```
 
@@ -273,6 +279,7 @@ Feature: SSL Automation Configuration
 | T002-FR05 | Deployment Secrets Configuration | PLN-10: Create GitHub repository and enable Actions with required secrets | ingestion-service-wbs.csv |
 | T002-FR06 | Access Control Validation | Security requirements from architecture | ingestion-service-architecture.md |
 | T002-FR07 | SSL Automation Configuration | Section 6.2: TLS in transit via Coolify reverse proxy | ingestion-service-architecture.md |
+| T002-FR08 | Git Repository Direct Deployment | Section 8.1: Direct Git-based deployment approach | ingestion-service-architecture.md |
 | T002-NR01 | Security Requirements | Section 6.2: Security Considerations | ingestion-service-architecture.md |
 | T002-NR02 | Reliability Requirements | Overall system reliability goals | ingestion-service-architecture.md |
 | T002-NR03 | Performance Requirements | CI/CD and deployment efficiency needs | ingestion-service-wbs.csv |
