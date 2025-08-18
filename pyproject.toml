@@ -1,0 +1,17 @@
+[project]
+name = "iss-data-analytics-system"
+version = "0.1.0"
+description = "A real-time telemetry platform that ingests ISS Lightstreamer data, validates and enriches it, publishes to a durable message bus, enables near-real-time analytics"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "services/*",
+    "libs/*",
+]
+
+[tool.uv.sources]
+iss-common = { workspace = true }
+iss-test-utils = { workspace = true }
