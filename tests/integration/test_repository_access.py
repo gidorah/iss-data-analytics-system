@@ -154,7 +154,7 @@ class TestRepositoryAccess:
             "libs/common/pyproject.toml"
         ]
         
-        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"]).strip().decode("utf-8")
         
         for file_path in required_files:
             full_path = os.path.join(repo_root, file_path)
