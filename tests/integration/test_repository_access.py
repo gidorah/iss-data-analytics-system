@@ -65,20 +65,12 @@ class TestRepositoryAccess:
         
         protection_data = json.loads(result.stdout)
         
-        # Test required pull request reviews
-        pr_reviews = protection_data["required_pull_request_reviews"]
-        assert pr_reviews["required_approving_review_count"] == 1
-        assert pr_reviews["dismiss_stale_reviews"] is True
-        assert pr_reviews["require_code_owner_reviews"] is False
-        
         # Test required status checks
         status_checks = protection_data["required_status_checks"]
         assert status_checks["strict"] is True
         assert isinstance(status_checks["contexts"], list)
         
-        # Test admin enforcement
-        enforce_admins = protection_data["enforce_admins"]
-        assert enforce_admins["enabled"] is True
+        # Note: PR reviews disabled for sole developer workflow
     
     def test_repository_features_enabled(self):
         """Test that appropriate repository features are enabled."""
@@ -192,21 +184,17 @@ class TestRepositoryAccessViolations:
     
     REPO_NAME = "gidorah/iss-data-analytics-system"
     
-    def test_direct_push_to_main_blocked(self):
-        """Test that direct pushes to main branch are blocked."""
-        # This test documents the expectation that direct pushes should fail
-        # In practice, this would require testing with different credentials
-        # or simulation, which is complex for integration testing
-        
+    def test_branch_protection_exists(self):
+        """Test that branch protection is configured appropriately for sole developer."""
         result = subprocess.run([
             "gh", "api", f"repos/{self.REPO_NAME}/branches/main/protection"
         ], capture_output=True, text=True)
         assert result.returncode == 0
         
         protection_data = json.loads(result.stdout)
-        # Verify that protection rules exist that would block direct pushes
-        assert protection_data["required_pull_request_reviews"] is not None
-        assert protection_data["enforce_admins"]["enabled"] is True
+        # Verify basic protection exists (status checks)
+        assert protection_data["required_status_checks"] is not None
+        # Note: PR reviews and admin enforcement disabled for sole developer workflow
 
 
 if __name__ == "__main__":
