@@ -1,0 +1,6 @@
+[project]
+name = "event-storage"
+version = "0.1.0"
+description = "Event storage service for ISS Data Analytics System"
+requires-python = ">=3.11"
+dependencies = []

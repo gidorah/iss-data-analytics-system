@@ -1,0 +1,6 @@
+[project]
+name = "pee-bot"
+version = "0.1.0"
+description = "Pee bot service for ISS Data Analytics System"
+requires-python = ">=3.11"
+dependencies = []

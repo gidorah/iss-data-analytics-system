@@ -4,9 +4,4 @@ version = "0.1.0"
 description = "ISS Lightstreamer data ingestion service with validation and Kafka publishing"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "iss-common",
-]
-
-[tool.uv.sources]
-iss-common = { workspace = true }
+dependencies = []
