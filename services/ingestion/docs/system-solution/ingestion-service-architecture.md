@@ -210,7 +210,9 @@ Operational endpoints:
 
 **6.2. Security Considerations**
 
-- TLS in transit via Coolify reverse proxy for inbound HTTP. Kafka/Redpanda runs locally on the same VPS; keep broker bound to localhost. If remote clients are introduced later, enable SASL/SSL.
+- TLS in transit via Coolify reverse proxy for inbound HTTP with automatic SSL certificate management through Let's Encrypt integration. All HTTP requests automatically redirected to HTTPS.
+- SSL certificates automatically obtained, renewed, and managed by Coolify without manual intervention.
+- Kafka/Redpanda runs locally on the same VPS; keep broker bound to localhost. If remote clients are introduced later, enable SASL/SSL.
 - Secrets (tokens) stored as Coolify environment variables; no secrets in images. Broker can run without SASL on localhost-only.
 - Strict input validation; reject malformed data; capped payload sizes; timeouts on external calls.
 
@@ -232,7 +234,7 @@ Operational endpoints:
 ### 8. Deployment and Infrastructure
 
 Recommended deployment:
-- Containerized FastAPI app on Coolify-managed VPS. One service, health-checked, auto-restart. Resource caps to protect host.
+- Containerized FastAPI app on Coolify-managed VPS. One service, health-checked, auto-restart. Resource caps to protect host. Automatic SSL certificate management via Let's Encrypt.
 - Self-hosted Redpanda (Kafka-compatible) container on the same VPS. Single-node, data persisted to host volume; topic retention 7 days.
 - CI/CD via GitHub Actions: on main, run tests, build/push image, trigger Coolify deploy. Versioned configs per env.
 

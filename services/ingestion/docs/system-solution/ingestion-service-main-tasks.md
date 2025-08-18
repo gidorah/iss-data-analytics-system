@@ -3,7 +3,7 @@
   - **Dependencies:** None
 
 - **T002 - Prepare Access, Repositories, and Environment**
-  - **Description:** Establish Coolify/VPS access and readiness, create GitHub repo with Actions enabled and required secrets, and verify environment setup.
+  - **Description:** Establish Coolify/VPS access and readiness, create GitHub repo with Actions enabled and required secrets, verify environment setup, and configure SSL automation via Let's Encrypt.
   - **Dependencies:** T001
 
 - **T003 - Baseline Architecture and Design**
@@ -31,7 +31,7 @@
   - **Dependencies:** T006
 
 - **T009 - Apply Security and Configuration Management**
-  - **Description:** Enforce Bearer token authentication for the test endpoint, secure exposure behind reverse proxy/IP allowlists, and implement environment-based configuration loading with secrets handling.
+  - **Description:** Enforce Bearer token authentication for the test endpoint, secure exposure behind reverse proxy with automatic SSL certificates/IP allowlists, and implement environment-based configuration loading with secrets handling.
   - **Dependencies:** T008
 
 - **T010 - Establish Observability**
@@ -51,7 +51,7 @@
   - **Dependencies:** T012
 
 - **T014 - Staging Deployment and Smoke Testing**
-  - **Description:** Deploy via Coolify to staging with health checks and environment configuration, then run a smoke test to ingest a sample and verify the message in the Kafka topic.
+  - **Description:** Deploy via Coolify to staging with health checks, SSL automation, and environment configuration, then run a smoke test to ingest a sample and verify the message in the Kafka topic.
   - **Dependencies:** T013, T005
 
 - **T015 - Monitoring and Alerts Configuration**
@@ -59,7 +59,7 @@
   - **Dependencies:** T014
 
 - **T016 - Production Release**
-  - **Description:** Promote the image and configuration to production in Coolify and execute a release validation with a documented rollback plan.
+  - **Description:** Promote the image and configuration to production in Coolify with SSL certificate validation and execute a release validation with a documented rollback plan.
   - **Dependencies:** T015
 
 - **T017 - Runbook and Operational Documentation**
