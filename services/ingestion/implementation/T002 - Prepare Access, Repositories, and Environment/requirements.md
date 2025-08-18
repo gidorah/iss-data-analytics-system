@@ -124,10 +124,12 @@ Feature: GitHub Repository Creation
 
   Scenario: Collaboration settings
     Given the repository has been created
-    When I configure team access and permissions
-    Then appropriate team members should have write access
-    And external contributors should have appropriate read/review permissions
+    When I configure repository access controls
+    Then the repository should have proper branch protection rules
     And repository settings should enforce code review requirements
+    And single-user access should be properly configured
+    
+    Note: Team access configuration skipped for single-user repository
 ```
 
 #### T002-FR04 - CI/CD Pipeline Bootstrap
@@ -185,9 +187,11 @@ Feature: Access Control Validation
   Scenario: Repository access controls
     Given the repository and CI/CD are configured
     When I audit the access permissions
-    Then only authorized team members should have write access
+    Then the repository owner should have appropriate access
     And CI/CD should have only necessary permissions for deployment
     And no overprivileged access should be granted
+    
+    Note: Single-user repository - team access validation not applicable
 
   Scenario: Deployment permission validation
     Given CI/CD secrets are configured

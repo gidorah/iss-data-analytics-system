@@ -79,22 +79,22 @@ sequenceDiagram
 
 **Props**: 
 - Repository name: `iss-data-analytics-system`
-- Visibility: Private (organizational security)
+- Visibility: Public (per user preference)
 - Default branch: `main` with protection rules
 - Branch protection: Require PR reviews, status checks
-- Collaboration permissions: Team-based access control
+- Collaboration permissions: Single-user repository configuration
 
 **Side effects**: 
 - Repository creation and configuration via GitHub API
-- Team permission assignment
 - Branch protection rule enforcement
 - Webhook configuration for CI/CD integration
+- Single-user access configuration
 
 **Data Fetching Strategy**: Not applicable - static configuration
 
 **Integration Pattern**: Direct integration with GitHub Actions and Coolify via webhooks
 
-**Dependencies**: GitHub organization access, team member accounts
+**Dependencies**: GitHub account access
 
 ### User Interface Design
 
@@ -110,7 +110,7 @@ sequenceDiagram
 ### Error Handling
 
 #### Error Recovery
-- Repository access failures: Verify permissions and team membership
+- Repository access failures: Verify permissions and account access
 - Branch protection bypass attempts: Enforce through GitHub settings
 - Unauthorized access: Audit logs and access review procedures
 
