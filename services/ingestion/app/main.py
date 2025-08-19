@@ -10,7 +10,7 @@ import os
 app = FastAPI(
     title="ISS Ingestion Service",
     description="Ingests ISS Lightstreamer telemetry data and publishes to message bus",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 
@@ -23,13 +23,9 @@ async def health_check():
 @app.get("/")
 async def root():
     """Root endpoint with basic service info"""
-    return {
-        "service": "ingestion-service",
-        "status": "running",
-        "version": "0.1.0"
-    }
+    return {"service": "ingestion-service", "status": "running", "version": "0.1.0"}
 
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)  # nosec B104
