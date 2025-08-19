@@ -438,6 +438,8 @@ dev = [
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "ruff" },
+    { name = "types-psutil" },
+    { name = "types-requests" },
 ]
 test = [
     { name = "psutil" },
@@ -459,6 +461,8 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'test'", specifier = ">=6.0.0" },
     { name = "requests", marker = "extra == 'test'", specifier = ">=2.28.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "types-psutil", marker = "extra == 'dev'", specifier = ">=5.9.0" },
+    { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.28.0" },
 ]
 provides-extras = ["test", "dev"]
 
@@ -1110,6 +1114,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/43/78/d90f616bf5f88f8710ad067c1f8705bf7618059836ca084e5bb2a0855d75/typer-0.16.1.tar.gz", hash = "sha256:d358c65a464a7a90f338e3bb7ff0c74ac081449e53884b12ba658cbd72990614", size = 102836, upload-time = "2025-08-18T19:18:22.898Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2d/76/06dbe78f39b2203d2a47d5facc5df5102d0561e2807396471b5f7c5a30a1/typer-0.16.1-py3-none-any.whl", hash = "sha256:90ee01cb02d9b8395ae21ee3368421faf21fa138cb2a541ed369c08cec5237c9", size = 46397, upload-time = "2025-08-18T19:18:21.663Z" },
+]
+
+[[package]]
+name = "types-psutil"
+version = "7.0.0.20250801"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/5d/32fe570f7e22bf638a49c881c5e2142beeda9dad6b21a15805af66571cd8/types_psutil-7.0.0.20250801.tar.gz", hash = "sha256:0230b56234252cc6f59c361dccbaaa08f3088ea3569367abe6900485d388c97d", size = 20238, upload-time = "2025-08-01T03:47:39.309Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/84/d18c8d2b53ba2024d110494483b7bdcc9741b7285cd396307b2941353b4d/types_psutil-7.0.0.20250801-py3-none-any.whl", hash = "sha256:751842baf9e0efa31b3a7722a38a3f9afeb5a7132b146a1960cd472db362faa0", size = 23058, upload-time = "2025-08-01T03:47:38.151Z" },
+]
+
+[[package]]
+name = "types-requests"
+version = "2.32.4.20250809"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/b0/9355adb86ec84d057fea765e4c49cce592aaf3d5117ce5609a95a7fc3dac/types_requests-2.32.4.20250809.tar.gz", hash = "sha256:d8060de1c8ee599311f56ff58010fb4902f462a1470802cf9f6ed27bc46c4df3", size = 23027, upload-time = "2025-08-09T03:17:10.664Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2b/6f/ec0012be842b1d888d46884ac5558fd62aeae1f0ec4f7a581433d890d4b5/types_requests-2.32.4.20250809-py3-none-any.whl", hash = "sha256:f73d1832fb519ece02c85b1f09d5f0dd3108938e7d47e7f94bbfa18a6782b163", size = 20644, upload-time = "2025-08-09T03:17:09.716Z" },
 ]
 
 [[package]]
