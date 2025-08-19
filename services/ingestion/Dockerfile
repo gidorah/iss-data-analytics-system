@@ -2,7 +2,7 @@
 # Optimized for monorepo structure with shared libraries
 
 # Build stage - Install dependencies and build workspace
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 # Install system dependencies for building
 RUN apt-get update && apt-get install -y \
@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for fast Python package management (latest version with workspace support)
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    mv ~/.cargo/bin/uv /usr/local/bin/uv
 
 # Set working directory to repository root for monorepo access
 WORKDIR /app
@@ -28,7 +28,7 @@ COPY services/ingestion/ services/ingestion/
 RUN uv sync --frozen --no-dev --workspace
 
 # Production stage - Minimal runtime image
-FROM python:3.11-slim as runtime
+FROM python:3.11-slim AS runtime
 
 # Create non-root user for security
 RUN groupadd --gid 1001 --system appgroup && \
@@ -53,7 +53,7 @@ COPY --from=builder --chown=appuser:appgroup /app/libs /app/libs
 
 # Add virtual environment to PATH
 ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH="/app:$PYTHONPATH"
+ENV PYTHONPATH="/app"
 
 # Switch to non-root user
 USER appuser
