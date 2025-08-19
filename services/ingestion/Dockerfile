@@ -25,7 +25,7 @@ COPY libs/ libs/
 COPY services/ingestion/ services/ingestion/
 
 # Install all workspace dependencies including shared libraries
-RUN uv sync --frozen --no-dev --workspace
+RUN uv sync --frozen --no-dev --all-packages
 
 # Production stage - Minimal runtime image
 FROM python:3.11-slim AS runtime
