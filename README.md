@@ -109,24 +109,29 @@ iss-data-analytics-system/
 
 2. **Install dependencies**
    ```bash
-   uv sync
+   uv sync --extra dev
    ```
 
-3. **Start local infrastructure**
+3. **Set up pre-commit hooks** (optional, for automatic formatting/linting)
+   ```bash
+   uv run pre-commit install
+   ```
+
+4. **Start local infrastructure**
    ```bash
    docker-compose -f infrastructure/kafka/docker-compose.yml up -d
    ```
 
-4. **Run services individually**
+5. **Run services individually**
    ```bash
    # Ingestion service
    cd services/ingestion
    uv run python -m app.main
-   
+
    # Pee-Bot analytics
    cd services/pee-bot
    uv run python -m app.main
-   
+
    # Event storage
    cd services/event-storage
    uv run python -m app.main
@@ -188,7 +193,7 @@ uv run ruff check --fix .
 
 - **Current throughput**: ~70 messages/second
 - **Design target**: 10,000 messages/second
-- **P99 latency**: 
+- **P99 latency**:
   - Ingestion to dashboard-ready: < 1 second
   - Ingestion to persistence: < 5 seconds
 - **Pee-Bot posting**: Within 2 minutes (P95) of event detection
@@ -238,7 +243,7 @@ Key metrics:
 
 **Out of Scope**:
 - Real-time user dashboards (future phase)
-- ML forecasting beyond Pee-Bot (future phase)  
+- ML forecasting beyond Pee-Bot (future phase)
 - Multi-region deployment
 - Comprehensive data governance
 
