@@ -26,8 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync
-          uv sync --extra dev
+          uv sync --extra dev --extra test
 
       - name: Run linting
         run: |
@@ -51,7 +50,7 @@ jobs:
         run: |
           bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
           ./actionlint -version
-        
+
       - name: Lint workflow files
         run: ./actionlint -color
 
@@ -78,8 +77,7 @@ jobs:
 
       - name: Check dependency vulnerabilities
         run: |
-          uv sync
-          uv sync --extra dev
+          uv sync --extra dev --extra test
           # This will show outdated packages and potential security issues
           uv tree
         continue-on-error: true
