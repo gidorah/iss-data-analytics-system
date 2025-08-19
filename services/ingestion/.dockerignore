@@ -1,0 +1,77 @@
+# Dockerignore for ISS Data Analytics System - Ingestion Service
+# Optimize build context by excluding unnecessary files
+
+# Version control
+.git/
+.gitignore
+
+# Documentation and implementation tracking
+README.md
+docs/
+implementation/
+
+# Development and testing
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments (we use uv)
+venv/
+env/
+ENV/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files (secrets should be in Coolify env vars)
+.env
+.env.local
+.env.production
+.env.staging
+
+# Other services (not needed for ingestion service build)
+services/pee-bot/
+services/event-storage/
+
+# Infrastructure files
+infrastructure/
+
+# Root level development files not needed for build
+CONTRIBUTING.md
+LICENSE
