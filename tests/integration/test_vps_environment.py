@@ -51,16 +51,16 @@ class TestVPSEnvironment:
         disk_total_gb = disk_usage.total / (1024**3)
 
         # Test 1: Total storage capacity requirement
-        assert (
-            disk_total_gb >= 50.0
-        ), f"Total disk space {disk_total_gb:.2f}GB < minimum required 50GB"
+        assert disk_total_gb >= 50.0, (
+            f"Total disk space {disk_total_gb:.2f}GB < minimum required 50GB"
+        )
 
         # Test 2: Sufficient free space for ingestion service and message broker
         # Architecture estimates ~21GB for 7-day retention + headroom = ~30GB needed
         min_free_gb = 20.0  # Minimum free space for operation
-        assert (
-            disk_free_gb >= min_free_gb
-        ), f"Free disk space {disk_free_gb:.2f}GB < minimum required {min_free_gb}GB"
+        assert disk_free_gb >= min_free_gb, (
+            f"Free disk space {disk_free_gb:.2f}GB < minimum required {min_free_gb}GB"
+        )
 
         print(
             f"✅ Disk validation passed: {disk_total_gb:.2f}GB total capacity, {disk_free_gb:.2f}GB free"
@@ -76,9 +76,9 @@ class TestVPSEnvironment:
             result = subprocess.run(
                 ["docker", "--version"], capture_output=True, text=True, timeout=10
             )
-            assert (
-                result.returncode == 0
-            ), f"Docker version check failed: {result.stderr}"
+            assert result.returncode == 0, (
+                f"Docker version check failed: {result.stderr}"
+            )
 
             version_output = result.stdout.strip()
             # Extract version number (format: Docker version 20.10.x, build ...)
@@ -86,9 +86,9 @@ class TestVPSEnvironment:
             version_str = version_parts[2].rstrip(",")
             major_version = int(version_str.split(".")[0])
 
-            assert (
-                major_version >= 20
-            ), f"Docker version {version_str} < minimum required 20.x"
+            assert major_version >= 20, (
+                f"Docker version {version_str} < minimum required 20.x"
+            )
 
             print(f"✅ Docker validation passed: {version_output}")
 
@@ -103,15 +103,15 @@ class TestVPSEnvironment:
             result = subprocess.run(
                 ["docker", "info"], capture_output=True, text=True, timeout=15
             )
-            assert (
-                result.returncode == 0
-            ), f"Docker daemon not accessible: {result.stderr}"
+            assert result.returncode == 0, (
+                f"Docker daemon not accessible: {result.stderr}"
+            )
 
             # Check for key indicators that Docker is properly running
             output = result.stdout.lower()
-            assert (
-                "containers:" in output
-            ), "Docker daemon output missing container information"
+            assert "containers:" in output, (
+                "Docker daemon output missing container information"
+            )
             assert "images:" in output, "Docker daemon output missing image information"
 
             print(
@@ -181,9 +181,9 @@ class TestVPSEnvironment:
                 text=True,
                 timeout=60,
             )
-            assert (
-                pull_result.returncode == 0
-            ), f"Docker pull failed: {pull_result.stderr}"
+            assert pull_result.returncode == 0, (
+                f"Docker pull failed: {pull_result.stderr}"
+            )
 
             # Run test container
             run_result = subprocess.run(
@@ -193,9 +193,9 @@ class TestVPSEnvironment:
                 timeout=30,
             )
             assert run_result.returncode == 0, f"Docker run failed: {run_result.stderr}"
-            assert (
-                "Hello from Docker!" in run_result.stdout
-            ), "Expected Docker output not found"
+            assert "Hello from Docker!" in run_result.stdout, (
+                "Expected Docker output not found"
+            )
 
             print("✅ Container execution capability validated")
 
@@ -209,9 +209,9 @@ class TestVPSEnvironment:
         arch = platform.machine().lower()
         compatible_archs = ["x86_64", "amd64", "aarch64", "arm64"]
 
-        assert (
-            arch in compatible_archs
-        ), f"System architecture {arch} not in compatible list: {compatible_archs}"
+        assert arch in compatible_archs, (
+            f"System architecture {arch} not in compatible list: {compatible_archs}"
+        )
 
         print(f"✅ Architecture compatibility validated: {arch}")
 
