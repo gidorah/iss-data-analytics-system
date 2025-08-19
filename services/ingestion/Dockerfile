@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install uv for fast Python package management (latest version with workspace support)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    mv ~/.cargo/bin/uv /usr/local/bin/uv
+    mv ~/.local/bin/uv /usr/local/bin/uv
 
 # Set working directory to repository root for monorepo access
 WORKDIR /app
