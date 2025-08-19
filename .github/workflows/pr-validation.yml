@@ -25,16 +25,15 @@ jobs:
         run: uv python install 3.11
 
       - name: Install dependencies
-        run: |
-          uv sync --extra dev --extra test
+        run: uv sync --extra test --extra dev
 
       - name: Run linting
         run: |
           uv run ruff check .
           uv run ruff format --check .
 
-      - name: Run tests with coverage
-        run: uv run pytest tests/ -v --cov=services --cov=libs --cov-report=term-missing
+      - name: Run tests
+        run: uv run pytest tests/ -v
 
       - name: Type checking (if mypy configured)
         run: |
@@ -77,7 +76,7 @@ jobs:
 
       - name: Check dependency vulnerabilities
         run: |
-          uv sync --extra dev --extra test
+          uv sync --extra test --extra dev
           # This will show outdated packages and potential security issues
           uv tree
         continue-on-error: true
