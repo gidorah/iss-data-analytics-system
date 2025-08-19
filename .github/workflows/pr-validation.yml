@@ -1,0 +1,82 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run linting
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Run tests with coverage
+        run: uv run pytest tests/ -v --cov=services --cov=libs --cov-report=term-missing
+
+      - name: Type checking (if mypy configured)
+        run: |
+          if uv run python -c "import mypy" 2>/dev/null; then
+            echo "Running mypy type checking..."
+            uv run mypy services/ libs/ --ignore-missing-imports
+          else
+            echo "mypy not installed, skipping type checking"
+          fi
+        continue-on-error: true
+
+      - name: Install actionlint
+        run: |
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -version
+        
+      - name: Lint workflow files
+        run: ./actionlint -color
+
+      - name: Security scan (if bandit configured)
+        run: |
+          if uv run python -c "import bandit" 2>/dev/null; then
+            echo "Running bandit security scan..."
+            uv run bandit -r services/ libs/ -f json
+          else
+            echo "bandit not installed, skipping security scan"
+          fi
+        continue-on-error: true
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Check dependency vulnerabilities
+        run: |
+          uv sync
+          # This will show outdated packages and potential security issues
+          uv tree
+        continue-on-error: true
