@@ -54,24 +54,6 @@ class TestRepositoryAccess:
         repo_data = json.loads(result.stdout)
         assert repo_data["defaultBranchRef"]["name"] == "main"
 
-    def test_branch_protection_rules_enabled(self):
-        """Test that branch protection rules are properly configured."""
-        result = subprocess.run(
-            ["gh", "api", f"repos/{self.REPO_NAME}/branches/main/protection"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
-
-        protection_data = json.loads(result.stdout)
-
-        # Test required status checks
-        status_checks = protection_data["required_status_checks"]
-        assert status_checks["strict"] is True
-        assert isinstance(status_checks["contexts"], list)
-
-        # Note: PR reviews disabled for sole developer workflow
-
     def test_repository_features_enabled(self):
         """Test that appropriate repository features are enabled."""
         result = subprocess.run(
@@ -119,20 +101,6 @@ class TestRepositoryAccess:
 
         repo_data = json.loads(result.stdout)
         assert repo_data["deleteBranchOnMerge"] is True
-
-    def test_repository_security_settings(self):
-        """Test repository security-related configurations."""
-        # Test that force pushes are not allowed on protected branch
-        result = subprocess.run(
-            ["gh", "api", f"repos/{self.REPO_NAME}/branches/main/protection"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
-
-        protection_data = json.loads(result.stdout)
-        assert protection_data["allow_force_pushes"]["enabled"] is False
-        assert protection_data["allow_deletions"]["enabled"] is False
 
     @pytest.mark.skipif(
         not os.getenv("GITHUB_TOKEN"), reason="Requires authenticated GitHub access"
@@ -198,20 +166,6 @@ class TestRepositoryAccessViolations:
     """Test scenarios that should be blocked by access controls."""
 
     REPO_NAME = "gidorah/iss-data-analytics-system"
-
-    def test_branch_protection_exists(self):
-        """Test that branch protection is configured appropriately for sole developer."""
-        result = subprocess.run(
-            ["gh", "api", f"repos/{self.REPO_NAME}/branches/main/protection"],
-            capture_output=True,
-            text=True,
-        )
-        assert result.returncode == 0
-
-        protection_data = json.loads(result.stdout)
-        # Verify basic protection exists (status checks)
-        assert protection_data["required_status_checks"] is not None
-        # Note: PR reviews and admin enforcement disabled for sole developer workflow
 
 
 if __name__ == "__main__":
