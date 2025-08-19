@@ -33,9 +33,10 @@ FROM python:3.11-slim as runtime
 RUN groupadd --gid 1001 --system appgroup && \
     useradd --uid 1001 --system --gid appgroup --home-dir /app --shell /bin/bash appuser
 
-# Install minimal runtime dependencies
+# Install minimal runtime dependencies including curl for health checks
 RUN apt-get update && apt-get install -y \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
