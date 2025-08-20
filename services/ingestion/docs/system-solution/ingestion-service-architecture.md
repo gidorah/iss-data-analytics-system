@@ -66,9 +66,12 @@ Justification: Simpler single-binary deployment (no JVM/KRaft complexity), lower
 
 2.8. **DevOps & Deployment**
 
-- Containerized with Docker; deployed to Coolify-managed VPS as a single service.
-- CI/CD: GitHub Actions (build, test, push image, deploy).
-- Environments: staging and production; same container with env-based config.
+- Containerized with multi-stage Docker build optimized for monorepo workspace structure.
+- Deployed to Coolify-managed VPS with direct Git-based deployment (no registry required).
+- CI/CD: GitHub Actions with comprehensive testing, linting, and automated deployment via webhooks.
+- Container: FastAPI with Uvicorn, non-root execution, health checks, and automatic SSL via Let's Encrypt.
+- Environments: staging and production with identical containers, environment-based configuration.
+- Build System: uv package manager with workspace support for shared library dependencies.
 
 Justifications summary: Single microservice with modular internal components; minimal infra. Kafka API explicitly required; use self-hosted Redpanda (Kafka-compatible) on the same VPS to avoid extra cost; Docker-on-VPS keeps ops simple.
 
@@ -210,11 +213,18 @@ Operational endpoints:
 
 **6.2. Security Considerations**
 
-- TLS in transit via Coolify reverse proxy for inbound HTTP with automatic SSL certificate management through Let's Encrypt integration. All HTTP requests automatically redirected to HTTPS.
-- SSL certificates automatically obtained, renewed, and managed by Coolify without manual intervention.
+**Current Implementation**: ✅ **Operational Security Measures**
+- **TLS/HTTPS**: Automatic SSL certificate provisioning via Let's Encrypt with HTTP-to-HTTPS redirect
+- **Container Security**: Non-root execution (appuser:appgroup), resource limits, minimal attack surface
+- **Build Security**: Multi-stage Docker build, vulnerability scanning with bandit, no secrets in images
+- **Secret Management**: Environment variables managed via Coolify, runtime secret injection
+- **Network Security**: Traefik reverse proxy with SSL termination, internal service communication
+
+**Additional Security Measures**:
 - Kafka/Redpanda runs locally on the same VPS; keep broker bound to localhost. If remote clients are introduced later, enable SASL/SSL.
-- Secrets (tokens) stored as Coolify environment variables; no secrets in images. Broker can run without SASL on localhost-only.
-- Strict input validation; reject malformed data; capped payload sizes; timeouts on external calls.
+- Strict input validation with Pydantic schemas; reject malformed data; capped payload sizes; timeouts on external calls.
+- Pre-commit hooks for security scanning, code formatting, and vulnerability detection.
+- Automated security updates via CI/CD pipeline with bandit security linting.
 
 **6.3. Logging and Monitoring**
 
@@ -233,10 +243,29 @@ Operational endpoints:
 
 ### 8. Deployment and Infrastructure
 
-Recommended deployment:
-- Containerized FastAPI app on Coolify-managed VPS. One service, health-checked, auto-restart. Resource caps to protect host. Automatic SSL certificate management via Let's Encrypt.
-- Self-hosted Redpanda (Kafka-compatible) container on the same VPS. Single-node, data persisted to host volume; topic retention 7 days.
-- CI/CD via GitHub Actions: on main, run tests, trigger Coolify webhook for direct Git deployment. Coolify builds from repository using Nixpacks/Dockerfile. Simple, cost-effective, no registry required. Validated workflow includes pytest execution, ruff formatting/linting, type checking, and deployment secret validation.
+**Current Implementation Status**: ✅ **Deployed and Operational**
+
+Production deployment:
+- **Container**: Multi-stage Docker build with Python 3.11, FastAPI, and Uvicorn running on port 8000
+- **Platform**: Coolify Cloud control plane managing deployment to dedicated Hetzner VPS via SSH
+- **SSL**: Automatic Let's Encrypt certificate provisioning with direct traffic routing to VPS
+- **Health Monitoring**: `/healthz` endpoint with 30-second intervals and automatic container restart
+- **Security**: Non-root container execution (appuser:appgroup), resource limits, and HTTPS-only access
+- **Build System**: uv workspace dependency management with monorepo shared library support
+- **CI/CD**: GitHub Actions pipeline with automated testing, linting, security scanning, and webhook deployment
+
+**Deployment Configuration**:
+- Base Directory: `/` (repository root for monorepo workspace access)
+- Dockerfile Location: `services/ingestion/Dockerfile`
+- Build Command: `uv sync --frozen --no-dev --all-packages` (installs workspace dependencies)
+- Environment: Staging environment operational, production-ready configuration available
+- SSL: Automatic HTTPS with Let's Encrypt certificate management and HTTP redirect
+
+**Pending Infrastructure Components**:
+- Self-hosted Redpanda (Kafka-compatible) message broker deployment
+- Inter-service communication setup for message bus integration
+- Prometheus/Grafana monitoring stack deployment
+- Production environment promotion and testing
 
 Cost and ops impact (rough order-of-magnitude, monthly):
 - Hetzner VPS (Coolify host): sunk cost (existing VPS). Complexity: low-to-medium; ops owned by you (VM, Docker, backups).
