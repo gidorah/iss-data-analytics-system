@@ -71,7 +71,7 @@ class TestGitHubActionsWorkflows:
 
         # Test job structure
         jobs = workflow["jobs"]
-        assert "test" in jobs, "Should have a test job"
+        assert "deployment-readiness" in jobs, "Should have a deployment-readiness job"
         assert "deploy" in jobs, "Should have a deploy job"
 
         # Test deployment job conditions
@@ -142,14 +142,18 @@ class TestGitHubActionsWorkflows:
             with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Should use uv setup action
-            assert "astral-sh/setup-uv" in content, (
-                f"{workflow_file.name} should use uv setup action"
-            )
+            # Only PR validation needs Python setup - CI/CD is deployment-focused
+            if workflow_file.name == "pr-validation.yml":
+                # Should use uv setup action
+                assert "astral-sh/setup-uv" in content, (
+                    f"{workflow_file.name} should use uv setup action"
+                )
 
-            # Should use uv commands
-            assert "uv sync" in content, f"{workflow_file.name} should use 'uv sync'"
-            assert "uv run" in content, f"{workflow_file.name} should use 'uv run'"
+                # Should use uv commands
+                assert "uv sync" in content, (
+                    f"{workflow_file.name} should use 'uv sync'"
+                )
+                assert "uv run" in content, f"{workflow_file.name} should use 'uv run'"
 
             # Should not use pip directly for main dependencies
             assert "pip install -r requirements.txt" not in content, (
@@ -167,13 +171,17 @@ class TestGitHubActionsWorkflows:
             with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Should include pytest
-            assert "pytest" in content, f"{workflow_file.name} should include pytest"
+            # Only PR validation includes testing - CI/CD is deployment-focused
+            if workflow_file.name == "pr-validation.yml":
+                # Should include pytest
+                assert "pytest" in content, (
+                    f"{workflow_file.name} should include pytest"
+                )
 
-            # Should include linting
-            assert "ruff" in content, (
-                f"{workflow_file.name} should include ruff linting"
-            )
+                # Should include linting
+                assert "ruff" in content, (
+                    f"{workflow_file.name} should include ruff linting"
+                )
 
     def test_workflow_includes_security_checks(self):
         """Test that workflows include security validation."""
@@ -186,10 +194,12 @@ class TestGitHubActionsWorkflows:
             with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Should include actionlint for workflow validation
-            assert "actionlint" in content, (
-                f"{workflow_file.name} should include actionlint"
-            )
+            # Only PR validation includes actionlint - CI/CD is deployment-focused
+            if workflow_file.name == "pr-validation.yml":
+                # Should include actionlint for workflow validation
+                assert "actionlint" in content, (
+                    f"{workflow_file.name} should include actionlint"
+                )
 
     @pytest.mark.skipif(
         not os.getenv("GITHUB_TOKEN"), reason="Requires authenticated GitHub access"
@@ -234,24 +244,21 @@ class TestGitHubActionsWorkflows:
                 f"Workflow file {filename} should use hyphens, not underscores"
             )
 
-    def test_deployment_job_has_secrets_reference(self):
-        """Test that deployment job properly references secrets."""
+    def test_deployment_job_has_proper_configuration(self):
+        """Test that deployment job is properly configured for GitHub App integration."""
         ci_cd_path = self.WORKFLOWS_DIR / "ci-cd.yml"
 
         with open(ci_cd_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Should reference required secrets for Coolify deployment
-        assert "COOLIFY_WEBHOOK" in content, "Should reference COOLIFY_WEBHOOK secret"
-        assert "COOLIFY_TOKEN" in content, "Should reference COOLIFY_TOKEN secret"
+        # Should have deployment readiness checks
+        assert "deployment-readiness" in content, "Should have deployment-readiness job"
 
-        # Should use proper secret syntax
-        assert "${{ secrets.COOLIFY_WEBHOOK }}" in content, (
-            "Should use proper secret syntax for webhook"
-        )
-        assert "${{ secrets.COOLIFY_TOKEN }}" in content, (
-            "Should use proper secret syntax for token"
-        )
+        # Should have proper deployment flow for GitHub App integration
+        assert "GitHub App" in content, "Should reference GitHub App integration"
+
+        # Should have health check validation
+        assert "healthz" in content, "Should include health check validation"
 
 
 class TestWorkflowExecution:
