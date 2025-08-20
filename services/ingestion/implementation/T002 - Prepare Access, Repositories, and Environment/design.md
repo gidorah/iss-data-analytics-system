@@ -18,18 +18,18 @@ flowchart TB
         GA[GitHub Actions]
         GS[GitHub Secrets]
     end
-    
+
     subgraph VPS["Coolify-Managed VPS"]
         CL[Coolify Platform]
         DR[Docker Runtime]
         SSL[SSL Certificate Manager]
     end
-    
+
     subgraph External["External Services"]
         LE[Let's Encrypt]
         GH[GitHub.com]
     end
-    
+
     GR --> GA
     GA --> GS
     GA --> CL
@@ -37,11 +37,11 @@ flowchart TB
     CL --> SSL
     SSL --> LE
     GA --> GH
-    
+
     classDef github fill:#f9f9f9,stroke:#333,stroke-width:2px
     classDef vps fill:#e1f5fe,stroke:#333,stroke-width:2px
     classDef external fill:#fff3e0,stroke:#333,stroke-width:2px
-    
+
     class GR,GA,GS github
     class CL,DR,SSL vps
     class LE,GH external
@@ -57,7 +57,7 @@ sequenceDiagram
     participant CL as Coolify
     participant VPS as VPS Environment
     participant LE as Let's Encrypt
-    
+
     Dev->>GH: Push code to main branch
     GH->>GA: Trigger workflow
     GA->>GA: Run tests
@@ -77,14 +77,14 @@ sequenceDiagram
 
 **Purpose & Responsibilities**: Serves as the central source code repository with proper access controls, branch protection, and collaboration settings. Maintains version control, enforces code review requirements, and provides the foundation for automated CI/CD workflows.
 
-**Props**: 
+**Props**:
 - Repository name: `iss-data-analytics-system`
 - Visibility: Public (per user preference)
 - Default branch: `main` with protection rules
 - Branch protection: Require PR reviews, status checks
 - Collaboration permissions: Single-user repository configuration
 
-**Side effects**: 
+**Side effects**:
 - Repository creation and configuration via GitHub API
 - Branch protection rule enforcement
 - Webhook configuration for CI/CD integration
@@ -362,6 +362,9 @@ sequenceDiagram
 - Implement proper error handling and retry logic
 - Follow GitHub Actions security best practices
 - Use workflow templates for consistency
+- Ensure consistent tooling versions (ruff, Python, uv) across pre-commit and CI
+- Configure proper GitHub token permissions for repository API access
+- Remove tests requiring administrative privileges from CI validation
 
 **Coolify Integration**:
 - Configure webhook authentication properly
@@ -402,3 +405,29 @@ sequenceDiagram
 - Progressive web app features
 - Touch-friendly interface elements
 - Offline capability for critical monitoring features
+
+# Implementation Lessons Learned
+
+## CI/CD Workflow Optimization
+
+During implementation, several critical issues were identified and resolved:
+
+**Tooling Version Consistency**:
+- Pre-commit hooks and CI must use identical tool versions (ruff, mypy, etc.)
+- Version mismatches cause formatting discrepancies and CI failures
+- Solution: Pin specific versions in `.pre-commit-config.yaml` matching project dependencies
+
+**GitHub Actions Permissions**:
+- Default `GITHUB_TOKEN` has limited permissions for repository management APIs
+- Branch protection API requires administrative access not available to Actions
+- Solution: Remove admin-privileged tests from CI; verify branch protection manually
+
+**Test Environment Requirements**:
+- VPS disk space requirements (50GB total capacity, sufficient free space for operation)
+- GitHub CLI authentication in CI requires explicit `GH_TOKEN` environment variable
+- Type checking requires explicit type stub dependencies in pre-commit configuration
+
+**Workflow Validation**:
+- Shellcheck/actionlint integration prevents workflow syntax errors
+- Complex shell conditionals should use brace syntax `{ }` instead of parentheses `( )`
+- Consistent formatting prevents CI failures and improves maintainability

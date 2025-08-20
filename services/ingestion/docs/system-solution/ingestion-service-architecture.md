@@ -236,7 +236,7 @@ Operational endpoints:
 Recommended deployment:
 - Containerized FastAPI app on Coolify-managed VPS. One service, health-checked, auto-restart. Resource caps to protect host. Automatic SSL certificate management via Let's Encrypt.
 - Self-hosted Redpanda (Kafka-compatible) container on the same VPS. Single-node, data persisted to host volume; topic retention 7 days.
-- CI/CD via GitHub Actions: on main, run tests, trigger Coolify webhook for direct Git deployment. Coolify builds from repository using Nixpacks/Dockerfile. Simple, cost-effective, no registry required.
+- CI/CD via GitHub Actions: on main, run tests, trigger Coolify webhook for direct Git deployment. Coolify builds from repository using Nixpacks/Dockerfile. Simple, cost-effective, no registry required. Validated workflow includes pytest execution, ruff formatting/linting, type checking, and deployment secret validation.
 
 Cost and ops impact (rough order-of-magnitude, monthly):
 - Hetzner VPS (Coolify host): sunk cost (existing VPS). Complexity: low-to-medium; ops owned by you (VM, Docker, backups).

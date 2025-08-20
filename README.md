@@ -139,6 +139,16 @@ iss-data-analytics-system/
 
 ## 🔧 Development
 
+### CI/CD Status
+
+✅ **GitHub Actions Workflows**: Fully operational
+- **PR Validation**: Automated testing, linting, formatting, and security checks
+- **Main Branch CI/CD**: Test execution with deployment trigger to Coolify
+- **Secret Management**: Secure handling of deployment credentials
+- **Workflow Validation**: Automated syntax checking with actionlint
+
+### Development Workflow
+
 ### Workspace Management
 
 Add new workspace members to the root `pyproject.toml`:
