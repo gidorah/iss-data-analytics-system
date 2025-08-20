@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Deploy to Staging
 
 on:
   push:
@@ -48,7 +48,7 @@ jobs:
         run: |
           echo "✅ All deployment checks passed!"
           echo "🔄 Coolify GitHub App will automatically deploy this commit"
-          echo "📍 Service URL: http://yoows40k844kc8w880ks48o0.157.90.158.16.sslip.io"
+          echo "📍 Staging URL: http://yoows40k844kc8w880ks48o0.157.90.158.16.sslip.io"
           echo "🕒 Commit: ${{ github.sha }}"
           echo "👤 Author: ${{ github.actor }}"
 
