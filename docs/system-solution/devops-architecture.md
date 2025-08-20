@@ -8,10 +8,12 @@ This document defines the complete DevOps architecture for the ISS Data Analytic
 
 ### 1.2. Architecture Principles
 
+- **Staged Deployment Pipeline**: Staging auto-deploys on main branch, production requires manual release tags
 - **GitOps-Driven Deployment**: All deployments triggered from Git operations with comprehensive testing
 - **Container-First**: All services deployed as Docker containers with health checks and auto-restart
 - **Monorepo Structure**: Unified repository with workspace-based dependency management
 - **Environment Parity**: Identical container images across staging and production environments
+- **Release Management**: Semantic versioning with controlled production deployments and rollback capability
 - **Observability by Design**: Built-in health checks, metrics, and logging for all services
 - **Security by Default**: TLS termination, non-root containers, secret management, and vulnerability scanning
 
@@ -101,17 +103,32 @@ flowchart TB
 
 ## 3. CI/CD Pipeline Architecture
 
-### 3.1. Pipeline Overview
+### 3.1. Staged Deployment Pipeline Overview
 
 ```mermaid
-flowchart LR
-    DEV[Developer] -->|Push| GH[GitHub]
-    GH -->|Trigger| PR[PR Validation]
+flowchart TD
+    DEV[Developer] -->|Push| PR[Pull Request]
     PR -->|Tests Pass| MERGE[Merge to Main]
-    MERGE -->|Trigger| CI[CI/CD Pipeline]
-    CI -->|Build & Test| DEPLOY[Deploy to Coolify]
-    DEPLOY -->|Webhook| COOLIFY[Coolify Platform]
-    COOLIFY -->|Git Deploy| CONTAINER[Running Container]
+    MERGE -->|Auto-trigger| STAGING[Deploy to Staging]
+    STAGING -->|Manual Validation| VALIDATE[Test in Staging]
+    VALIDATE -->|Create Tag| RELEASE[Release Tag v1.0.0]
+    RELEASE -->|Auto-trigger| PROD[Deploy to Production]
+    PROD -->|Monitor| MONITOR[Production Monitoring]
+
+    subgraph "Staging Environment"
+        STAGING
+        VALIDATE
+    end
+
+    subgraph "Production Environment"
+        PROD
+        MONITOR
+    end
+
+    style STAGING fill:#e1f5fe
+    style VALIDATE fill:#fff3e0
+    style RELEASE fill:#fff3e0
+    style PROD fill:#ffebee
 ```
 
 ### 3.2. GitHub Actions Workflows
@@ -127,7 +144,7 @@ Jobs:
   - Workflow Validation: actionlint for GitHub Actions syntax
 ```
 
-#### CI/CD Pipeline (`.github/workflows/ci-cd.yml`)
+#### Staging Deployment Pipeline (`.github/workflows/staging-deploy.yml`)
 ```yaml
 Triggers: Push to main branch
 Jobs:
@@ -136,23 +153,49 @@ Jobs:
     - Linting: ruff check and format validation
     - Testing: pytest execution with integration tests
     - Workflow: actionlint validation
-  deploy:
-    - Validation: Deployment secret verification
-    - Trigger: Coolify webhook with authentication
-    - Monitoring: Deployment success validation
+  deploy-staging:
+    - Validation: Staging deployment readiness
+    - Trigger: Coolify webhook for staging environment
+    - Health Check: Validate staging deployment success
 ```
 
-### 3.3. Deployment Flow
+#### Production Deployment Pipeline (`.github/workflows/production-deploy.yml`)
+```yaml
+Triggers: Release tag creation (v*.*.* pattern)
+Jobs:
+  deploy-production:
+    - Validation: Production deployment readiness
+    - Release Notes: Generate release notes from tag
+    - Trigger: Coolify webhook for production environment
+    - Health Check: Validate production deployment success
+    - Notification: Success/failure notification
+```
 
-1. **Code Integration**: Developer pushes changes to feature branch
-2. **PR Validation**: Automated testing, linting, security scanning
-3. **Code Review**: Manual review and approval process
-4. **Main Branch Merge**: Automated CI/CD pipeline trigger
-5. **Build & Test**: Full test suite execution with workspace dependencies
-6. **Deployment Trigger**: Webhook to Coolify with authenticated request
-7. **Container Build**: Coolify builds Docker image from Git repository
-8. **Service Deployment**: Rolling deployment with health check validation
-9. **Verification**: Automatic health check validation and rollback on failure
+### 3.3. Staged Deployment Flow
+
+#### Development to Staging Flow (Continuous Integration)
+1. **Feature Development**: Developer creates feature branch from main
+2. **Pull Request**: PR triggers automated validation pipeline
+3. **PR Validation**: Automated testing, linting, security scanning, workflow validation
+4. **Code Review**: Manual review and approval process
+5. **Main Branch Merge**: Merge triggers staging deployment pipeline
+6. **Staging Deployment**: Automatic deployment to staging environment
+7. **Staging Validation**: Manual testing and feature validation in staging
+
+#### Staging to Production Flow (Controlled Release)
+8. **Release Decision**: Manual decision to promote staging to production
+9. **Release Tag Creation**: Create semantic version tag (e.g., v1.0.0, v1.0.1)
+10. **Production Deployment**: Tag triggers production deployment pipeline
+11. **Production Validation**: Automatic health checks and manual verification
+12. **Monitoring**: Continuous monitoring and alerting in production
+13. **Rollback (if needed)**: Deploy previous tag version for immediate rollback
+
+#### Emergency Hotfix Flow
+1. **Hotfix Branch**: Create emergency fix branch from production tag
+2. **Fast-track Review**: Expedited review process for critical fixes
+3. **Staging Deployment**: Merge to main deploys to staging first
+4. **Rapid Validation**: Quick staging validation for critical fixes
+5. **Emergency Release**: Create hotfix tag for immediate production deployment
 
 ## 4. Containerization Strategy
 
@@ -244,10 +287,12 @@ Each service maintains its own `pyproject.toml` with specific dependencies while
 - **Dockerfile Location**: Service-specific paths (e.g., `services/ingestion/Dockerfile`)
 
 #### Environment Management
-- **Staging Environment**: Full feature parity with production
-- **Production Environment**: Resource-optimized with monitoring enabled
-- **Configuration**: Environment variables managed through Coolify interface
+- **Staging Environment**: Auto-deploy from main branch, development-friendly configuration
+- **Production Environment**: Deploy from release tags only, production-optimized configuration
+- **Environment Isolation**: Separate Coolify applications with different webhook triggers
+- **Configuration**: Environment-specific variables managed through Coolify interface
 - **Secrets**: Secure secret injection without exposure in container images
+- **Release Control**: Production deployments require explicit tag creation for full control
 
 ### 6.2. Service Deployment Configuration
 
@@ -466,18 +511,22 @@ Infrastructure Metrics:
 ### 13.1. Deployment Procedures
 
 #### Standard Deployment
-1. **Code Change**: Developer creates feature branch with changes
+1. **Development**: Developer creates feature branch with changes
 2. **PR Creation**: Pull request triggers validation pipeline
 3. **Code Review**: Manual review and approval process
-4. **Merge**: Automated CI/CD pipeline executes on merge to main
-5. **Deployment**: Coolify receives webhook and deploys new container version
-6. **Validation**: Health checks confirm successful deployment
+4. **Staging Deployment**: Merge to main auto-deploys to staging environment
+5. **Staging Validation**: Manual testing and validation in staging
+6. **Production Release**: Create release tag to trigger production deployment
+7. **Production Validation**: Health checks and manual verification of production
+8. **Monitoring**: Continuous monitoring of production deployment
 
 #### Emergency Deployment
-1. **Hotfix Branch**: Create emergency fix branch from main
+1. **Hotfix Branch**: Create emergency fix branch from latest production tag
 2. **Fast-track Review**: Expedited review process for critical fixes
-3. **Deployment**: Same automated pipeline with priority processing
-4. **Rollback**: Immediate rollback capability via Coolify interface
+3. **Staging Deployment**: Merge to main deploys to staging for validation
+4. **Emergency Release**: Create hotfix tag for immediate production deployment
+5. **Rollback**: Deploy previous tag version for immediate rollback capability
+6. **Post-incident**: Update main branch with hotfix changes
 
 ### 13.2. Maintenance Procedures
 
