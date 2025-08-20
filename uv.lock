@@ -410,10 +410,14 @@ version = "0.1.0"
 source = { virtual = "services/ingestion" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
+    { name = "psutil" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" }]
+requires-dist = [
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
+    { name = "psutil", specifier = ">=6.1.0" },
+]
 
 [[package]]
 name = "iniconfig"
