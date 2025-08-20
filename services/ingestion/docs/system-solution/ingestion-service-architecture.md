@@ -68,9 +68,10 @@ Justification: Simpler single-binary deployment (no JVM/KRaft complexity), lower
 
 - Containerized with multi-stage Docker build optimized for monorepo workspace structure.
 - Deployed to Coolify-managed VPS with direct Git-based deployment (no registry required).
-- CI/CD: GitHub Actions with comprehensive testing, linting, and automated deployment via webhooks.
+- CI/CD: Staged deployment pipeline with GitHub Actions - staging auto-deploys from main branch, production deploys from release tags.
 - Container: FastAPI with Uvicorn, non-root execution, health checks, and automatic SSL via Let's Encrypt.
-- Environments: staging and production with identical containers, environment-based configuration.
+- Environments: staging (continuous integration) and production (controlled releases) with identical containers, environment-based configuration.
+- Release Management: Semantic versioning with tag-based production deployments and rollback capability.
 - Build System: uv package manager with workspace support for shared library dependencies.
 
 Justifications summary: Single microservice with modular internal components; minimal infra. Kafka API explicitly required; use self-hosted Redpanda (Kafka-compatible) on the same VPS to avoid extra cost; Docker-on-VPS keeps ops simple.
@@ -243,29 +244,57 @@ Operational endpoints:
 
 ### 8. Deployment and Infrastructure
 
-**Current Implementation Status**: ✅ **Deployed and Operational**
+**Current Implementation Status**: ✅ **Staged Deployment Architecture Operational**
 
-Production deployment:
+#### Staging Environment (Continuous Integration)
+- **Trigger**: Auto-deploy on push to main branch
+- **Purpose**: Continuous integration testing and feature validation
 - **Container**: Multi-stage Docker build with Python 3.11, FastAPI, and Uvicorn running on port 8000
-- **Platform**: Coolify Cloud control plane managing deployment to dedicated Hetzner VPS via SSH
-- **SSL**: Automatic Let's Encrypt certificate provisioning with direct traffic routing to VPS
+- **Configuration**: Development-friendly settings (`ENVIRONMENT=staging`, `LOG_LEVEL=DEBUG`)
+- **SSL**: Automatic Let's Encrypt certificate provisioning with HTTP redirect
 - **Health Monitoring**: `/healthz` endpoint with 30-second intervals and automatic container restart
+
+#### Production Environment (Controlled Releases)
+- **Trigger**: Manual deployment via release tags (e.g., v1.0.0)
+- **Purpose**: Stable production workload with manual release control
+- **Container**: Identical container image to staging with production-optimized configuration
+- **Configuration**: Production settings (`ENVIRONMENT=production`, `LOG_LEVEL=INFO`)
+- **Release Management**: Semantic versioning with rollback capability via previous tags
+- **SSL**: Automatic HTTPS with Let's Encrypt certificate management and HTTP redirect
+
+#### Common Infrastructure Components
+- **Platform**: Coolify Cloud control plane managing deployment to dedicated Hetzner VPS via SSH
 - **Security**: Non-root container execution (appuser:appgroup), resource limits, and HTTPS-only access
 - **Build System**: uv workspace dependency management with monorepo shared library support
-- **CI/CD**: GitHub Actions pipeline with automated testing, linting, security scanning, and webhook deployment
+- **CI/CD**: GitHub Actions staged deployment pipeline with comprehensive testing and security scanning
 
-**Deployment Configuration**:
+**Deployment Configuration (Both Environments)**:
 - Base Directory: `/` (repository root for monorepo workspace access)
 - Dockerfile Location: `services/ingestion/Dockerfile`
 - Build Command: `uv sync --frozen --no-dev --all-packages` (installs workspace dependencies)
-- Environment: Staging environment operational, production-ready configuration available
-- SSL: Automatic HTTPS with Let's Encrypt certificate management and HTTP redirect
+- Health Check: Docker `HEALTHCHECK` directive with automatic restart on failure
+
+#### Deployment Flow
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant GH as GitHub
+    participant Staging as Staging Environment
+    participant Prod as Production Environment
+
+    Dev->>GH: Push to main branch
+    GH->>Staging: Auto-deploy via webhook
+    Note over Staging: Continuous integration testing
+    Dev->>GH: Create release tag v1.0.0
+    GH->>Prod: Deploy specific version
+    Note over Prod: Controlled production release
+```
 
 **Pending Infrastructure Components**:
 - Self-hosted Redpanda (Kafka-compatible) message broker deployment
 - Inter-service communication setup for message bus integration
 - Prometheus/Grafana monitoring stack deployment
-- Production environment promotion and testing
+- Production release tag automation and notification system
 
 Cost and ops impact (rough order-of-magnitude, monthly):
 - Hetzner VPS (Coolify host): sunk cost (existing VPS). Complexity: low-to-medium; ops owned by you (VM, Docker, backups).
@@ -274,9 +303,12 @@ Cost and ops impact (rough order-of-magnitude, monthly):
 - Sentry (optional): free tier; complexity: low; SaaS ops.
 
 Operational playbook highlights:
-- Rollouts: restart ingestion first, then broker only during maintenance windows; ensure broker data volume is backed up or disposable if acceptable.
-- Config via env: broker bootstrap (localhost), topic, partitions, auth token, metrics flags.
-- Alarms: queue depth high-watermark, publish failures, broker disk usage >80%, broker restarts, Lightstreamer reconnect churn.
+- **Staging Rollouts**: Automatic on main branch merge, immediate validation and testing
+- **Production Rollouts**: Manual via release tags, with health check validation and rollback capability
+- **Rollback Strategy**: Deploy previous production tag for immediate rollback
+- **Infrastructure Startup**: Redpanda broker first, then ingestion service during maintenance windows
+- **Config Management**: Environment-specific settings via Coolify, broker bootstrap (localhost), topic configuration
+- **Monitoring**: Queue depth high-watermark, publish failures, broker disk usage >80%, broker restarts, Lightstreamer reconnect churn
 
 
 ### 9. Assumptions and Gaps
