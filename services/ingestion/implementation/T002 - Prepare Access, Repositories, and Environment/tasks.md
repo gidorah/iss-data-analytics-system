@@ -146,12 +146,12 @@
   - _Requirements: T002-FR08, T002-NR02_
   - _Description: Connect GitHub repository for direct Git deployment_
 
-- [ ] **Task 2.5.3**: Set up build configuration for Nixpacks/Dockerfile detection
+- [x] **Task 2.5.3**: Set up build configuration for Nixpacks/Dockerfile detection
   - _File: N/A (Coolify build settings)_
   - _Requirements: T002-FR08, T002-NR03_
   - _Description: Configure automatic build method detection and settings_
 
-- [ ] **Task 2.5.4**: Configure service health checks and monitoring
+- [x] **Task 2.5.4**: Configure service health checks and monitoring
   - _File: N/A (Coolify health check configuration)_
   - _Requirements: T002-FR08, T002-NR02_
   - _Description: Set up health check endpoints and monitoring parameters_
