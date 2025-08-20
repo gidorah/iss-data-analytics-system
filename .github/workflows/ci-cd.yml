@@ -74,7 +74,7 @@ jobs:
             else
               echo "⚠️  Service not ready yet, retrying in 15s..."
               sleep 15
-              if [ $i -eq 5 ]; then
+              if [ "$i" -eq 5 ]; then
                 echo "::warning::Service health check failed - GitHub App may still be deploying"
                 echo "🔍 Check Coolify dashboard for deployment status"
                 exit 0  # Don't fail CI/CD, just warn
