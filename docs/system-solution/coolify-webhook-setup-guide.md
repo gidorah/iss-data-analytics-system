@@ -3,6 +3,8 @@
 
 ### Method 1: Coolify Dashboard - Application Settings
 
+**🧪 Testing staged deployment - staging only deployment validation**
+
 **Step 1: Access Your Production Application**
 1. Log into your Coolify dashboard
 2. Navigate to your production application/service
