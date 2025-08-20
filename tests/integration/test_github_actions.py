@@ -6,9 +6,10 @@ syntactically correct, and can execute successfully in the CI/CD pipeline.
 
 import os
 import subprocess
-import yaml
 from pathlib import Path
+
 import pytest
+import yaml
 
 
 class TestGitHubActionsWorkflows:
@@ -78,7 +79,10 @@ class TestGitHubActionsWorkflows:
         deploy_job = jobs["deploy"]
         assert "if" in deploy_job, "Deploy job should have conditions"
         assert "needs" in deploy_job, "Deploy job should depend on test"
-        assert deploy_job["needs"] == "test", "Deploy should need test job"
+
+        assert deploy_job["needs"] == "deployment-readiness", (
+            "Deploy should need deployment-readiness job"
+        )
 
     def test_pr_validation_workflow_structure(self):
         """Test the structure of the PR validation workflow."""

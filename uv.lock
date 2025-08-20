@@ -448,6 +448,7 @@ test = [
     { name = "pytest-cov" },
     { name = "pyyaml" },
     { name = "requests" },
+    { name = "types-pyyaml" },
 ]
 
 [package.metadata]
@@ -464,6 +465,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
     { name = "types-psutil", marker = "extra == 'dev'", specifier = ">=5.9.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.0" },
+    { name = "types-pyyaml", marker = "extra == 'test'", specifier = ">=6.0.0" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.28.0" },
 ]
 provides-extras = ["test", "dev"]
