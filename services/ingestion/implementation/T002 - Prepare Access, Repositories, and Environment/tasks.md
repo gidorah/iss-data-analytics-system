@@ -136,12 +136,12 @@
 
 ### Phase 5: Coolify Platform Configuration
 
-- [ ] **Task 2.5.1**: Create new project in Coolify
+- [x] **Task 2.5.1**: Create new project in Coolify
   - _File: N/A (Coolify project configuration)_
   - _Requirements: T002-FR08, T002-NR02_
   - _Description: Set up project for ingestion service with appropriate settings_
 
-- [ ] **Task 2.5.2**: Configure Git repository connection in Coolify
+- [x] **Task 2.5.2**: Configure Git repository connection in Coolify
   - _File: N/A (Coolify Git integration)_
   - _Requirements: T002-FR08, T002-NR02_
   - _Description: Connect GitHub repository for direct Git deployment_
