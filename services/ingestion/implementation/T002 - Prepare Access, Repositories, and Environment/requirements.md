@@ -3,8 +3,8 @@
 
 ### 1. Overview
 
-**Task ID:** T002  
-**Task Name:** Prepare Access, Repositories, and Environment  
+**Task ID:** T002
+**Task Name:** Prepare Access, Repositories, and Environment
 **Business Purpose:** Establish the foundational infrastructure, access controls, and repository setup necessary for developing and deploying the ISS Telemetry Data Analytics System's Ingestion Service. This task ensures all technical prerequisites are in place before architecture design and development phases begin.
 
 This task creates the secure foundation for the entire project by establishing proper access to deployment infrastructure, creating the source code repository with automated CI/CD capabilities, and verifying the runtime environment readiness on the target VPS platform.
@@ -14,51 +14,51 @@ This task creates the secure foundation for the entire project by establishing p
 #### 2.1 Infrastructure Access Management
 
 **T002-FR01 - VPS Access Verification**
-*As a* DevOps Engineer  
-*I want* to verify and establish secure access to the Coolify-managed VPS environment  
+*As a* DevOps Engineer
+*I want* to verify and establish secure access to the Coolify-managed VPS environment
 *So that* I can deploy and manage the ingestion service containers with proper permissions and connectivity
 
 **T002-FR02 - Environment Readiness Assessment**
-*As a* Platform Engineer  
-*I want* to validate that the VPS environment meets the technical requirements for hosting both the ingestion service and Redpanda message broker  
+*As a* Platform Engineer
+*I want* to validate that the VPS environment meets the technical requirements for hosting both the ingestion service and Redpanda message broker
 *So that* I can ensure sufficient resources (CPU, memory, disk, network) are available for the planned workload
 
 #### 2.2 Source Code Repository Management
 
 **T002-FR03 - GitHub Repository Creation**
-*As a* Development Team Lead  
-*I want* to create a new GitHub repository with proper branch protection and collaboration settings  
+*As a* Development Team Lead
+*I want* to create a new GitHub repository with proper branch protection and collaboration settings
 *So that* the development team can collaborate securely on the ingestion service codebase with proper version control
 
 **T002-FR04 - Simple CI/CD Pipeline Bootstrap**
-*As a* DevOps Engineer  
-*I want* to configure GitHub Actions for testing with Coolify webhook deployment triggers  
+*As a* DevOps Engineer
+*I want* to configure GitHub Actions for testing with Coolify webhook deployment triggers
 *So that* tests run automatically and successful builds trigger direct Git-based deployment without registry complexity
 
 #### 2.3 Security and Secrets Management
 
 **T002-FR05 - Essential Deployment Secrets Configuration**
-*As a* Security Engineer  
-*I want* to configure minimal required deployment secrets (Coolify webhook URL and API token) in GitHub Actions  
+*As a* Security Engineer
+*I want* to configure minimal required deployment secrets (Coolify webhook URL and API token) in GitHub Actions
 *So that* the CI/CD pipeline can trigger direct Git deployment securely without unnecessary credential complexity
 
 **T002-FR06 - Access Control Validation**
-*As a* Security Engineer  
-*I want* to verify that all access controls and permissions follow the principle of least privilege  
+*As a* Security Engineer
+*I want* to verify that all access controls and permissions follow the principle of least privilege
 *So that* the deployment pipeline operates securely with minimal attack surface
 
 #### 2.4 SSL Certificate Management
 
 **T002-FR07 - SSL Automation Configuration**
-*As a* DevOps Engineer  
-*I want* to configure Coolify's automatic SSL certificate management with Let's Encrypt  
+*As a* DevOps Engineer
+*I want* to configure Coolify's automatic SSL certificate management with Let's Encrypt
 *So that* the ingestion service endpoints are secured with HTTPS without manual certificate management overhead
 
 #### 2.5 Direct Git Deployment Integration
 
 **T002-FR08 - Git Repository Direct Deployment**
-*As a* DevOps Engineer  
-*I want* to configure Coolify for direct Git repository deployment using Nixpacks or Dockerfile  
+*As a* DevOps Engineer
+*I want* to configure Coolify for direct Git repository deployment using Nixpacks or Dockerfile
 *So that* the service builds and deploys directly from source code without registry dependencies or additional complexity
 
 ### 3. Acceptance Criteria (Gherkin Syntax)
@@ -128,7 +128,7 @@ Feature: GitHub Repository Creation
     Then the repository should have proper branch protection rules
     And repository settings should enforce code review requirements
     And single-user access should be properly configured
-    
+
     Note: Team access configuration skipped for single-user repository
 ```
 
@@ -190,7 +190,7 @@ Feature: Access Control Validation
     Then the repository owner should have appropriate access
     And CI/CD should have only necessary permissions for deployment
     And no overprivileged access should be granted
-    
+
     Note: Single-user repository - team access validation not applicable
 
   Scenario: Deployment permission validation

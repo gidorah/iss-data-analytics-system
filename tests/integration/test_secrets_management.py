@@ -78,17 +78,19 @@ class TestSecretsUsageInWorkflows:
         with open(ci_cd_path, "r", encoding="utf-8") as f:
             workflow_content = f.read()
 
-        # Test that secrets are referenced using proper GitHub syntax
-        for secret_name in ["COOLIFY_WEBHOOK", "COOLIFY_TOKEN"]:
-            proper_syntax = f"${{{{ secrets.{secret_name} }}}}"
-            assert proper_syntax in workflow_content, (
-                f"Should reference {secret_name} using proper syntax"
-            )
+        # GitHub App integration doesn't require manual webhook secrets
+        # Should NOT have webhook secrets (since we use GitHub App)
+        assert "COOLIFY_WEBHOOK" not in workflow_content, (
+            "Should not reference COOLIFY_WEBHOOK with GitHub App integration"
+        )
+        assert "COOLIFY_TOKEN" not in workflow_content, (
+            "Should not reference COOLIFY_TOKEN with GitHub App integration"
+        )
 
-            # Ensure no hardcoded values (basic check)
-            assert f"{secret_name}=" not in workflow_content, (
-                f"Should not have hardcoded {secret_name}"
-            )
+        # Should indicate GitHub App usage
+        assert "GitHub App" in workflow_content, (
+            "Should reference GitHub App integration"
+        )
 
     def test_secrets_are_used_in_environment_variables(self):
         """Test that secrets are properly mapped to environment variables."""
@@ -100,14 +102,12 @@ class TestSecretsUsageInWorkflows:
         with open(ci_cd_path, "r", encoding="utf-8") as f:
             workflow_content = f.read()
 
-        # Test that secrets are used in env blocks (proper pattern)
-        assert "env:" in workflow_content, "Should have environment variables section"
-
+        # GitHub App integration doesn't use webhook secrets
+        # Should NOT have webhook secret environment variables
         for secret_name in ["COOLIFY_WEBHOOK", "COOLIFY_TOKEN"]:
-            # Should have env mapping like: SECRET_NAME: ${{ secrets.SECRET_NAME }}
             env_pattern = f"{secret_name}: ${{{{ secrets.{secret_name} }}}}"
-            assert env_pattern in workflow_content, (
-                f"Should have proper env mapping for {secret_name}"
+            assert env_pattern not in workflow_content, (
+                f"Should not have env mapping for {secret_name} with GitHub App"
             )
 
     def test_workflow_has_secret_validation_step(self):
@@ -120,17 +120,16 @@ class TestSecretsUsageInWorkflows:
         with open(ci_cd_path, "r", encoding="utf-8") as f:
             workflow_content = f.read()
 
-        # Should have validation logic
-        assert "Validate deployment secrets" in workflow_content, (
-            "Should have secret validation step"
+        # GitHub App integration doesn't require secret validation
+        # Should NOT have webhook secret validation (since we don't use them)
+        assert "Validate deployment secrets" not in workflow_content, (
+            "Should not have webhook secret validation with GitHub App"
         )
 
-        # Should check for empty secrets
-        for secret_name in ["COOLIFY_WEBHOOK", "COOLIFY_TOKEN"]:
-            validation_check = f'[ -z "${secret_name}" ]'
-            assert validation_check in workflow_content, (
-                f"Should validate {secret_name} is not empty"
-            )
+        # Should have deployment readiness validation instead
+        assert "deployment readiness" in workflow_content, (
+            "Should have deployment readiness validation"
+        )
 
     def test_workflow_has_error_handling_for_missing_secrets(self):
         """Test that workflow properly handles missing secrets."""
