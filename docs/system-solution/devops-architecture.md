@@ -8,12 +8,12 @@ This document defines the complete DevOps architecture for the ISS Data Analytic
 
 ### 1.2. Architecture Principles
 
-- **Staged Deployment Pipeline**: Staging auto-deploys on main branch, production requires manual release tags
+- **Staged Deployment Pipeline**: Staging auto-deploys from the `staging` branch, production deploys from the `main` branch
 - **GitOps-Driven Deployment**: All deployments triggered from Git operations with comprehensive testing
 - **Container-First**: All services deployed as Docker containers with health checks and auto-restart
 - **Monorepo Structure**: Unified repository with workspace-based dependency management
 - **Environment Parity**: Identical container images across staging and production environments
-- **Release Management**: Semantic versioning with controlled production deployments and rollback capability
+- **Release Management**: Code is promoted from staging to production via pull requests, with optional Git tags for marking release milestones
 - **Observability by Design**: Built-in health checks, metrics, and logging for all services
 - **Security by Default**: TLS termination, non-root containers, secret management, and vulnerability scanning
 
@@ -106,36 +106,36 @@ flowchart TB
 ### 3.1. Staged Deployment Pipeline Overview
 
 ```mermaid
-flowchart TD
-    DEV[Developer] -->|Push| PR[Pull Request]
-    PR -->|Tests Pass| MERGE[Merge to Main]
-    MERGE -->|Auto-trigger| STAGING[Deploy to Staging]
-    STAGING -->|Manual Validation| VALIDATE[Test in Staging]
-    VALIDATE -->|Create Tag| RELEASE[Release Tag v1.0.0]
-    RELEASE -->|Auto-trigger| PROD[Deploy to Production]
-    PROD -->|Monitor| MONITOR[Production Monitoring]
-
-    subgraph "Staging Environment"
-        STAGING
-        VALIDATE
+graph TD
+    subgraph "GitHub Repository"
+        A[Development Branch] -->|PR Review & Merge| B(staging);
+        B -->|PR Review & Merge| C(main);
     end
 
-    subgraph "Production Environment"
-        PROD
-        MONITOR
+    subgraph "Coolify Projects (on Single VPS)"
+        D{Staging Project}
+        E{Production Project}
     end
 
-    style STAGING fill:#e1f5fe
-    style VALIDATE fill:#fff3e0
-    style RELEASE fill:#fff3e0
-    style PROD fill:#ffebee
+    subgraph "Automated Actions"
+        B --Push Event--> F[Webhook Trigger];
+        C --Push Event--> G[Webhook Trigger];
+        F --> H[Deploy to Staging];
+        G --> I[Deploy to Production];
+    end
+
+    style H fill:#90EE90,stroke:#333,stroke-width:2px
+    style I fill:#ADD8E6,stroke:#333,stroke-width:2px
+
+    B -.-> D;
+    C -.-> E;
 ```
 
 ### 3.2. GitHub Actions Workflows
 
 #### PR Validation Pipeline (`.github/workflows/pr-validation.yml`)
 ```yaml
-Triggers: Pull Request events (opened, synchronize, reopened)
+Triggers: Pull Request events (opened, synchronize, reopened) to main and staging
 Jobs:
   - Code Quality: ruff linting, formatting validation
   - Type Safety: mypy static type checking
@@ -146,7 +146,7 @@ Jobs:
 
 #### Staging Deployment Pipeline (`.github/workflows/staging-deploy.yml`)
 ```yaml
-Triggers: Push to main branch
+Triggers: Push to staging branch
 Jobs:
   test:
     - Dependencies: uv sync with workspace support
@@ -161,11 +161,10 @@ Jobs:
 
 #### Production Deployment Pipeline (`.github/workflows/production-deploy.yml`)
 ```yaml
-Triggers: Release tag creation (v*.*.* pattern)
+Triggers: Push to main branch
 Jobs:
   deploy-production:
     - Validation: Production deployment readiness
-    - Release Notes: Generate release notes from tag
     - Trigger: Coolify webhook for production environment
     - Health Check: Validate production deployment success
     - Notification: Success/failure notification
@@ -174,28 +173,25 @@ Jobs:
 ### 3.3. Staged Deployment Flow
 
 #### Development to Staging Flow (Continuous Integration)
-1. **Feature Development**: Developer creates feature branch from main
-2. **Pull Request**: PR triggers automated validation pipeline
-3. **PR Validation**: Automated testing, linting, security scanning, workflow validation
-4. **Code Review**: Manual review and approval process
-5. **Main Branch Merge**: Merge triggers staging deployment pipeline
-6. **Staging Deployment**: Automatic deployment to staging environment
-7. **Staging Validation**: Manual testing and feature validation in staging
+1. **Feature Development**: Developer creates a feature branch (e.g., `new-endpoint`) from `main`.
+2. **Submit for Staging**: The developer opens a Pull Request from their feature branch to `staging`.
+3. **PR Validation**: The PR triggers the automated validation pipeline (linting, testing, security scans).
+4. **Code Review**: Manual review and approval are required to merge to `staging`.
+5. **Staging Deployment**: Once the PR is merged, the push to the `staging` branch automatically triggers a deployment to the staging environment.
+6. **Staging Validation**: The team validates the changes in the staging environment.
 
 #### Staging to Production Flow (Controlled Release)
-8. **Release Decision**: Manual decision to promote staging to production
-9. **Release Tag Creation**: Create semantic version tag (e.g., v1.0.0, v1.0.1)
-10. **Production Deployment**: Tag triggers production deployment pipeline
-11. **Production Validation**: Automatic health checks and manual verification
-12. **Monitoring**: Continuous monitoring and alerting in production
-13. **Rollback (if needed)**: Deploy previous tag version for immediate rollback
+7. **Submit for Production**: A new Pull Request is opened from the `staging` branch to `main`.
+8. **PR Validation & Review**: The PR validation pipeline runs again, and a final code review is conducted. Approval from at least one team member is required.
+9. **Production Deployment**: After the PR is merged, the push to `main` automatically triggers a deployment of the tested code to the production environment.
+10. **Monitoring**: The new production deployment is monitored for stability and correctness.
+11. **Rollback (if needed)**: In case of issues, a rollback can be performed by reverting the merge commit on the `main` branch and re-deploying, or by deploying a previous commit hash manually via Coolify.
 
 #### Emergency Hotfix Flow
-1. **Hotfix Branch**: Create emergency fix branch from production tag
-2. **Fast-track Review**: Expedited review process for critical fixes
-3. **Staging Deployment**: Merge to main deploys to staging first
-4. **Rapid Validation**: Quick staging validation for critical fixes
-5. **Emergency Release**: Create hotfix tag for immediate production deployment
+1. **Hotfix Branch**: Create an emergency fix branch directly from `main`.
+2. **Fast-track Review**: Implement the fix and open a PR to `main` directly, following an expedited but mandatory review process.
+3. **Production Deployment**: Merging the hotfix PR to `main` deploys the fix to production.
+4. **Sync with Staging**: After production deployment, the hotfix must be merged back into the `staging` branch to ensure consistency.
 
 ## 4. Containerization Strategy
 
@@ -287,12 +283,12 @@ Each service maintains its own `pyproject.toml` with specific dependencies while
 - **Dockerfile Location**: Service-specific paths (e.g., `services/ingestion/Dockerfile`)
 
 #### Environment Management
-- **Staging Environment**: Auto-deploy from main branch, development-friendly configuration
-- **Production Environment**: Deploy from release tags only, production-optimized configuration
-- **Environment Isolation**: Separate Coolify applications with different webhook triggers
-- **Configuration**: Environment-specific variables managed through Coolify interface
-- **Secrets**: Secure secret injection without exposure in container images
-- **Release Control**: Production deployments require explicit tag creation for full control
+- **Staging Environment**: Auto-deploys from the `staging` branch, development-friendly configuration.
+- **Production Environment**: Auto-deploys from the `main` branch, production-optimized configuration.
+- **Environment Isolation**: Separate Coolify applications with different webhook triggers per branch.
+- **Configuration**: Environment-specific variables managed through the Coolify interface.
+- **Secrets**: Secure secret injection without exposure in container images.
+- **Release Control**: Production deployments are controlled via pull request merges to the `main` branch.
 
 ### 6.2. Service Deployment Configuration
 
@@ -511,22 +507,21 @@ Infrastructure Metrics:
 ### 13.1. Deployment Procedures
 
 #### Standard Deployment
-1. **Development**: Developer creates feature branch with changes
-2. **PR Creation**: Pull request triggers validation pipeline
-3. **Code Review**: Manual review and approval process
-4. **Staging Deployment**: Merge to main auto-deploys to staging environment
-5. **Staging Validation**: Manual testing and validation in staging
-6. **Production Release**: Create release tag to trigger production deployment
-7. **Production Validation**: Health checks and manual verification of production
-8. **Monitoring**: Continuous monitoring of production deployment
+1. **Development**: A developer creates a feature branch (e.g., `new-endpoint`) from `main`.
+2. **Submit for Staging**: The developer opens a Pull Request from the feature branch to `staging`.
+3. **PR Validation & Review**: The PR is automatically validated (tests, linting) and manually reviewed.
+4. **Staging Deployment**: On merge to `staging`, the application is automatically deployed to the staging environment.
+5. **Staging Validation**: The team validates the changes in the staging environment.
+6. **Submit for Production**: A new Pull Request is opened from `staging` to `main`.
+7. **Production Release**: After a final review and merge, the push to `main` automatically deploys the code to production.
+8. **Production Validation**: The production deployment is monitored via health checks and manual verification.
 
 #### Emergency Deployment
-1. **Hotfix Branch**: Create emergency fix branch from latest production tag
-2. **Fast-track Review**: Expedited review process for critical fixes
-3. **Staging Deployment**: Merge to main deploys to staging for validation
-4. **Emergency Release**: Create hotfix tag for immediate production deployment
-5. **Rollback**: Deploy previous tag version for immediate rollback capability
-6. **Post-incident**: Update main branch with hotfix changes
+1. **Hotfix Branch**: Create an emergency fix branch directly from `main`.
+2. **Fast-track Review**: Implement the fix and open a PR directly to `main` with an expedited review.
+3. **Production Deployment**: Merging the PR deploys the fix to production.
+4. **Sync with Staging**: The hotfix is then merged back to the `staging` branch to ensure consistency.
+5. **Rollback**: Rollback is achieved by reverting the merge commit on the `main` branch and re-deploying, or by deploying a previous commit hash manually via Coolify.
 
 ### 13.2. Maintenance Procedures
 

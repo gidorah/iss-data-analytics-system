@@ -25,7 +25,11 @@ class TestGitHubActionsWorkflows:
 
     def test_required_workflow_files_exist(self):
         """Test that required workflow files exist."""
-        required_workflows = ["ci-cd.yml", "pr-validation.yml"]
+        required_workflows = [
+            "staging-deploy.yml",
+            "production-deploy.yml",
+            "pr-validation.yml",
+        ]
 
         for workflow_file in required_workflows:
             workflow_path = self.WORKFLOWS_DIR / workflow_file
@@ -49,12 +53,47 @@ class TestGitHubActionsWorkflows:
                 except yaml.YAMLError as e:
                     pytest.fail(f"Invalid YAML syntax in {workflow_file.name}: {e}")
 
-    def test_ci_cd_workflow_structure(self):
-        """Test the structure of the main CI/CD workflow."""
-        ci_cd_path = self.WORKFLOWS_DIR / "ci-cd.yml"
-        assert ci_cd_path.exists(), "CI/CD workflow should exist"
+    def test_staging_deploy_workflow_structure(self):
+        """Test the structure of the staging deployment workflow."""
+        staging_path = self.WORKFLOWS_DIR / "staging-deploy.yml"
+        assert staging_path.exists(), "Staging deploy workflow should exist"
 
-        with open(ci_cd_path, "r") as f:
+        with open(staging_path, "r") as f:
+            workflow = yaml.safe_load(f)
+
+        # Test basic structure
+        assert "name" in workflow, "Workflow should have a name"
+        # Handle YAML parsing of 'on' keyword (may be parsed as True)
+        trigger_events = workflow.get("on") or workflow.get(True)
+        assert trigger_events is not None, "Workflow should have trigger events"
+        assert "jobs" in workflow, "Workflow should have jobs"
+
+        # Test trigger configuration
+        assert "push" in trigger_events, "Should trigger on push"
+        assert "staging" in trigger_events["push"]["branches"], (
+            "Should trigger on staging branch"
+        )
+
+        # Test job structure
+        jobs = workflow["jobs"]
+        assert "deployment-readiness" in jobs, "Should have a deployment-readiness job"
+        assert "deploy" in jobs, "Should have a deploy job"
+
+        # Test deployment job conditions
+        deploy_job = jobs["deploy"]
+        assert "if" in deploy_job, "Deploy job should have conditions"
+        assert "needs" in deploy_job, "Deploy job should depend on deployment-readiness"
+
+        assert deploy_job["needs"] == "deployment-readiness", (
+            "Deploy should need deployment-readiness job"
+        )
+
+    def test_production_deploy_workflow_structure(self):
+        """Test the structure of the production deployment workflow."""
+        production_path = self.WORKFLOWS_DIR / "production-deploy.yml"
+        assert production_path.exists(), "Production deploy workflow should exist"
+
+        with open(production_path, "r") as f:
             workflow = yaml.safe_load(f)
 
         # Test basic structure
@@ -73,16 +112,7 @@ class TestGitHubActionsWorkflows:
         # Test job structure
         jobs = workflow["jobs"]
         assert "deployment-readiness" in jobs, "Should have a deployment-readiness job"
-        assert "deploy" in jobs, "Should have a deploy job"
-
-        # Test deployment job conditions
-        deploy_job = jobs["deploy"]
-        assert "if" in deploy_job, "Deploy job should have conditions"
-        assert "needs" in deploy_job, "Deploy job should depend on test"
-
-        assert deploy_job["needs"] == "deployment-readiness", (
-            "Deploy should need deployment-readiness job"
-        )
+        assert "deploy-production" in jobs, "Should have a deploy-production job"
 
     def test_pr_validation_workflow_structure(self):
         """Test the structure of the PR validation workflow."""
@@ -101,6 +131,11 @@ class TestGitHubActionsWorkflows:
 
         # Test trigger configuration
         assert "pull_request" in trigger_events, "Should trigger on pull requests"
+        pr_config = trigger_events["pull_request"]
+        assert "branches" in pr_config, "Should specify target branches"
+        branches = pr_config["branches"]
+        assert "main" in branches, "Should trigger on PRs to main"
+        assert "staging" in branches, "Should trigger on PRs to staging"
 
         # Test permissions
         assert "permissions" in workflow, "Should have permissions defined"
@@ -111,7 +146,8 @@ class TestGitHubActionsWorkflows:
     def test_workflow_permissions_security(self):
         """Test that workflows have proper security permissions."""
         workflow_files = [
-            self.WORKFLOWS_DIR / "ci-cd.yml",
+            self.WORKFLOWS_DIR / "staging-deploy.yml",
+            self.WORKFLOWS_DIR / "production-deploy.yml",
             self.WORKFLOWS_DIR / "pr-validation.yml",
         ]
 
@@ -138,7 +174,8 @@ class TestGitHubActionsWorkflows:
     def test_workflow_uses_uv_package_manager(self):
         """Test that workflows use uv package manager instead of pip."""
         workflow_files = [
-            self.WORKFLOWS_DIR / "ci-cd.yml",
+            self.WORKFLOWS_DIR / "staging-deploy.yml",
+            self.WORKFLOWS_DIR / "production-deploy.yml",
             self.WORKFLOWS_DIR / "pr-validation.yml",
         ]
 
@@ -146,7 +183,7 @@ class TestGitHubActionsWorkflows:
             with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Only PR validation needs Python setup - CI/CD is deployment-focused
+            # Only PR validation needs Python setup - deployment workflows are deployment-focused
             if workflow_file.name == "pr-validation.yml":
                 # Should use uv setup action
                 assert "astral-sh/setup-uv" in content, (
@@ -167,7 +204,8 @@ class TestGitHubActionsWorkflows:
     def test_workflow_includes_testing(self):
         """Test that workflows include proper testing steps."""
         test_workflows = [
-            self.WORKFLOWS_DIR / "ci-cd.yml",
+            self.WORKFLOWS_DIR / "staging-deploy.yml",
+            self.WORKFLOWS_DIR / "production-deploy.yml",
             self.WORKFLOWS_DIR / "pr-validation.yml",
         ]
 
@@ -175,7 +213,7 @@ class TestGitHubActionsWorkflows:
             with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Only PR validation includes testing - CI/CD is deployment-focused
+            # Only PR validation includes testing - deployment workflows are deployment-focused
             if workflow_file.name == "pr-validation.yml":
                 # Should include pytest
                 assert "pytest" in content, (
@@ -190,7 +228,8 @@ class TestGitHubActionsWorkflows:
     def test_workflow_includes_security_checks(self):
         """Test that workflows include security validation."""
         workflow_files = [
-            self.WORKFLOWS_DIR / "ci-cd.yml",
+            self.WORKFLOWS_DIR / "staging-deploy.yml",
+            self.WORKFLOWS_DIR / "production-deploy.yml",
             self.WORKFLOWS_DIR / "pr-validation.yml",
         ]
 
@@ -198,7 +237,7 @@ class TestGitHubActionsWorkflows:
             with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Only PR validation includes actionlint - CI/CD is deployment-focused
+            # Only PR validation includes actionlint - deployment workflows are deployment-focused
             if workflow_file.name == "pr-validation.yml":
                 # Should include actionlint for workflow validation
                 assert "actionlint" in content, (
@@ -248,21 +287,76 @@ class TestGitHubActionsWorkflows:
                 f"Workflow file {filename} should use hyphens, not underscores"
             )
 
-    def test_deployment_job_has_proper_configuration(self):
-        """Test that deployment job is properly configured for GitHub App integration."""
-        ci_cd_path = self.WORKFLOWS_DIR / "ci-cd.yml"
+    def test_deployment_jobs_have_proper_configuration(self):
+        """Test that deployment jobs are properly configured for GitHub App integration."""
+        deployment_workflows = [
+            self.WORKFLOWS_DIR / "staging-deploy.yml",
+            self.WORKFLOWS_DIR / "production-deploy.yml",
+        ]
 
-        with open(ci_cd_path, "r", encoding="utf-8") as f:
-            content = f.read()
+        for workflow_path in deployment_workflows:
+            with open(workflow_path, "r", encoding="utf-8") as f:
+                content = f.read()
 
-        # Should have deployment readiness checks
-        assert "deployment-readiness" in content, "Should have deployment-readiness job"
+            # Should have deployment readiness checks
+            assert "deployment-readiness" in content, (
+                f"{workflow_path.name} should have deployment-readiness job"
+            )
 
-        # Should have proper deployment flow for GitHub App integration
-        assert "GitHub App" in content, "Should reference GitHub App integration"
+            # Should have proper deployment flow for GitHub App integration
+            assert "GitHub App" in content, (
+                f"{workflow_path.name} should reference GitHub App integration"
+            )
 
-        # Should have health check validation
-        assert "healthz" in content, "Should include health check validation"
+            # Should have health check validation (for staging)
+            if workflow_path.name == "staging-deploy.yml":
+                assert "healthz" in content, (
+                    f"{workflow_path.name} should include health check validation"
+                )
+
+    def test_staged_deployment_architecture(self):
+        """Test that the staged deployment architecture is properly implemented."""
+        # Test PR validation triggers on both main and staging
+        pr_path = self.WORKFLOWS_DIR / "pr-validation.yml"
+        with open(pr_path, "r") as f:
+            pr_workflow = yaml.safe_load(f)
+
+        trigger_events = pr_workflow.get("on") or pr_workflow.get(True)
+        pr_branches = trigger_events["pull_request"]["branches"]
+        assert "main" in pr_branches, "PR validation should trigger on main branch PRs"
+        assert "staging" in pr_branches, (
+            "PR validation should trigger on staging branch PRs"
+        )
+
+        # Test staging deployment triggers on staging branch
+        staging_path = self.WORKFLOWS_DIR / "staging-deploy.yml"
+        with open(staging_path, "r") as f:
+            staging_workflow = yaml.safe_load(f)
+
+        staging_events = staging_workflow.get("on") or staging_workflow.get(True)
+        staging_branches = staging_events["push"]["branches"]
+        assert "staging" in staging_branches, (
+            "Staging deploy should trigger on staging branch"
+        )
+        assert "main" not in staging_branches, (
+            "Staging deploy should NOT trigger on main branch"
+        )
+
+        # Test production deployment triggers on main branch
+        production_path = self.WORKFLOWS_DIR / "production-deploy.yml"
+        with open(production_path, "r") as f:
+            production_workflow = yaml.safe_load(f)
+
+        production_events = production_workflow.get("on") or production_workflow.get(
+            True
+        )
+        production_branches = production_events["push"]["branches"]
+        assert "main" in production_branches, (
+            "Production deploy should trigger on main branch"
+        )
+        assert "staging" not in production_branches, (
+            "Production deploy should NOT trigger on staging branch"
+        )
 
 
 class TestWorkflowExecution:

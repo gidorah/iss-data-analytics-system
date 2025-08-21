@@ -2,8 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    tags:
-      - 'v*.*.*'  # Triggers on semantic version tags (v1.0.0, v1.2.3, etc.)
+    branches: [main]
 
 permissions:
   contents: read
@@ -45,48 +44,30 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Validate tag format
+      - name: Validate production deployment
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "🏷️  Deploying tag: $TAG"
-          if [[ ! $TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid tag format. Use semantic versioning (v1.0.0)"
-            exit 1
-          fi
+          echo "🚀 Preparing production deployment from main branch"
+          echo "📍 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
 
-      - name: Trigger production deployment via webhook
+      - name: Notify production deployment readiness
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "🚀 Triggering production deployment for $TAG..."
-          echo "📍 Production webhook trigger initiated"
+          echo "🚀 Production deployment ready from main branch"
+          echo "📍 Production GitHub App deployment will be triggered automatically"
           echo "🕒 Commit: ${{ github.sha }}"
           echo "👤 Author: ${{ github.actor }}"
-          # Trigger Coolify production deployment webhook
-          if [ -n "${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}" ]; then
-            echo "📡 Calling Coolify production webhook..."
-            curl -X POST "${{ secrets.COOLIFY_PRODUCTION_WEBHOOK }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"ref\": \"$TAG\", \"sha\": \"${{ github.sha }}\", \"actor\": \"${{ github.actor }}\"}" \
-              --fail --silent --show-error
-            echo "✅ Production webhook triggered successfully"
-          else
-            echo "⚠️  COOLIFY_PRODUCTION_WEBHOOK secret not configured"
-            echo "🔧 Please add production webhook URL to repository secrets"
-            exit 1
-          fi
+          echo "✅ Coolify GitHub App integration will handle deployment"
 
-      - name: Wait for production deployment
+      - name: Wait for GitHub App deployment
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "⏳ Waiting for Coolify to process production deployment of $TAG..."
-          echo "ℹ️  Production deployment triggered by webhook"
+          echo "⏳ Waiting for Coolify GitHub App to process production deployment..."
+          echo "ℹ️  GitHub App integration will automatically deploy after this CI/CD completes"
           sleep 60
           echo "✅ Production deployment initiation period completed"
 
       - name: Validate production deployment
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "🏥 Validating production deployment of $TAG..."
+          echo "🏥 Validating production deployment from main branch..."
           echo "⚠️  Production URL validation pending - manual verification required"
           echo "🔍 Please verify deployment in Coolify dashboard"
           echo "📋 Manual checklist:"
@@ -96,12 +77,14 @@ jobs:
           echo "   - No error logs in production"
           echo "✅ Production deployment process completed"
 
-      - name: Create GitHub Release
+      - name: Production deployment summary
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "📝 Creating GitHub release for $TAG..."
-          echo "## Release $TAG" > release-notes.md
-          echo "Deployed at: $(date -u)" >> release-notes.md
-          echo "Commit: $GITHUB_SHA" >> release-notes.md
-          echo "Environment: Production" >> release-notes.md
-          echo "✅ Release notes prepared - manual GitHub release creation required"
+          echo "📝 Production deployment summary"
+          {
+            echo "## Production Deployment"
+            echo "Deployed at: $(date -u)"
+            echo "Commit: $GITHUB_SHA"
+            echo "Branch: main"
+            echo "Environment: Production"
+          } > deployment-summary.md
+          echo "✅ Production deployment completed via GitHub App integration"
