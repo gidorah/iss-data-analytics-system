@@ -80,9 +80,11 @@ jobs:
       - name: Production deployment summary
         run: |
           echo "📝 Production deployment summary"
-          echo "## Production Deployment" > deployment-summary.md
-          echo "Deployed at: $(date -u)" >> deployment-summary.md
-          echo "Commit: $GITHUB_SHA" >> deployment-summary.md
-          echo "Branch: main" >> deployment-summary.md
-          echo "Environment: Production" >> deployment-summary.md
+          {
+            echo "## Production Deployment"
+            echo "Deployed at: $(date -u)"
+            echo "Commit: $GITHUB_SHA"
+            echo "Branch: main"
+            echo "Environment: Production"
+          } > deployment-summary.md
           echo "✅ Production deployment completed via GitHub App integration"
