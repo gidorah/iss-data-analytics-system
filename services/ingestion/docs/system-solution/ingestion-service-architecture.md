@@ -68,10 +68,10 @@ Justification: Simpler single-binary deployment (no JVM/KRaft complexity), lower
 
 - Containerized with multi-stage Docker build optimized for monorepo workspace structure.
 - Deployed to Coolify-managed VPS with direct Git-based deployment (no registry required).
-- CI/CD: Staged deployment pipeline with GitHub Actions - staging auto-deploys from main branch, production deploys from release tags.
+- CI/CD: Staged deployment pipeline with GitHub Actions - staging auto-deploys from the `staging` branch, production deploys from the `main` branch.
 - Container: FastAPI with Uvicorn, non-root execution, health checks, and automatic SSL via Let's Encrypt.
 - Environments: staging (continuous integration) and production (controlled releases) with identical containers, environment-based configuration.
-- Release Management: Semantic versioning with tag-based production deployments and rollback capability.
+- Release Management: Code is promoted from `staging` to `main` via pull requests. Git tags are used to mark release milestones, not to trigger deployments.
 - Build System: uv package manager with workspace support for shared library dependencies.
 
 Justifications summary: Single microservice with modular internal components; minimal infra. Kafka API explicitly required; use self-hosted Redpanda (Kafka-compatible) on the same VPS to avoid extra cost; Docker-on-VPS keeps ops simple.
@@ -247,7 +247,7 @@ Operational endpoints:
 **Current Implementation Status**: ✅ **Staged Deployment Architecture Operational**
 
 #### Staging Environment (Continuous Integration)
-- **Trigger**: Auto-deploy on push to main branch
+- **Trigger**: Auto-deploy on push to `staging` branch
 - **Purpose**: Continuous integration testing and feature validation
 - **Container**: Multi-stage Docker build with Python 3.11, FastAPI, and Uvicorn running on port 8000
 - **Configuration**: Development-friendly settings (`ENVIRONMENT=staging`, `LOG_LEVEL=DEBUG`)
@@ -255,11 +255,11 @@ Operational endpoints:
 - **Health Monitoring**: `/healthz` endpoint with 30-second intervals and automatic container restart
 
 #### Production Environment (Controlled Releases)
-- **Trigger**: Manual deployment via release tags (e.g., v1.0.0)
-- **Purpose**: Stable production workload with manual release control
+- **Trigger**: Auto-deploy on push to `main` branch
+- **Purpose**: Stable production workload with controlled release via PR promotion
 - **Container**: Identical container image to staging with production-optimized configuration
 - **Configuration**: Production settings (`ENVIRONMENT=production`, `LOG_LEVEL=INFO`)
-- **Release Management**: Semantic versioning with rollback capability via previous tags
+- **Release Management**: Code is promoted from `staging` to `main`. Rollbacks are handled by reverting commits or deploying a specific commit hash.
 - **SSL**: Automatic HTTPS with Let's Encrypt certificate management and HTTP redirect
 
 #### Common Infrastructure Components
@@ -282,11 +282,12 @@ sequenceDiagram
     participant Staging as Staging Environment
     participant Prod as Production Environment
 
-    Dev->>GH: Push to main branch
-    GH->>Staging: Auto-deploy via webhook
+    Dev->>GH: Push to feature branch
+    Dev->>GH: Open PR to staging
+    GH->>Staging: Auto-deploy on merge to staging
     Note over Staging: Continuous integration testing
-    Dev->>GH: Create release tag v1.0.0
-    GH->>Prod: Deploy specific version
+    Dev->>GH: Open PR from staging to main
+    GH->>Prod: Auto-deploy on merge to main
     Note over Prod: Controlled production release
 ```
 
@@ -303,9 +304,9 @@ Cost and ops impact (rough order-of-magnitude, monthly):
 - Sentry (optional): free tier; complexity: low; SaaS ops.
 
 Operational playbook highlights:
-- **Staging Rollouts**: Automatic on main branch merge, immediate validation and testing
-- **Production Rollouts**: Manual via release tags, with health check validation and rollback capability
-- **Rollback Strategy**: Deploy previous production tag for immediate rollback
+- **Staging Rollouts**: Automatic on `staging` branch merge, immediate validation and testing
+- **Production Rollouts**: Automatic on `main` branch merge, with health check validation
+- **Rollback Strategy**: Revert merge commit on `main` or deploy a previous commit hash via Coolify
 - **Infrastructure Startup**: Redpanda broker first, then ingestion service during maintenance windows
 - **Config Management**: Environment-specific settings via Coolify, broker bootstrap (localhost), topic configuration
 - **Monitoring**: Queue depth high-watermark, publish failures, broker disk usage >80%, broker restarts, Lightstreamer reconnect churn
