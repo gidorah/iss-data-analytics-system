@@ -5,14 +5,17 @@ Requirements: T002-FR08, T002-NR02
 """
 
 import os
-import subprocess
+import socket
 import ssl
+import subprocess
+import sys
 import time
 from pathlib import Path
 from urllib.parse import urlparse
 
 import pytest
 import requests
+import yaml
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -20,11 +23,11 @@ from urllib3.util.retry import Retry
 class TestCoolifyDeployment:
     """Integration tests for Coolify Git-based deployment validation according to T002 requirements"""
 
-    # Environment-specific service URLs
-    STAGING_URL = "http://yoows40k844kc8w880ks48o0.157.90.158.16.sslip.io"
-    PRODUCTION_URL = os.getenv(
-        "PRODUCTION_SERVICE_URL", ""
-    )  # To be configured when available
+    # Environment-specific service URLs (configurable via environment variables)
+    STAGING_URL = os.getenv(
+        "STAGING_SERVICE_URL", "http://yoows40k844kc8w880ks48o0.157.90.158.16.sslip.io"
+    )
+    PRODUCTION_URL = os.getenv("PRODUCTION_SERVICE_URL", "")
 
     # Test timeouts and retry configuration
     HEALTH_CHECK_TIMEOUT = 30  # seconds
@@ -223,8 +226,6 @@ class TestCoolifyDeployment:
             # Create SSL context for certificate validation
             context = ssl.create_default_context()
 
-            import socket
-
             with socket.create_connection((hostname, port), timeout=10) as sock:
                 with context.wrap_socket(sock, server_hostname=hostname) as secure_sock:
                     cert = secure_sock.getpeercert()
@@ -272,11 +273,18 @@ class TestCoolifyDeployment:
         ), "Dockerfile should use multi-stage build pattern"
 
         # Test 2: Validate workspace configuration
-        import tomllib
-
         workspace_config = self.REPO_ROOT / "pyproject.toml"
-        with open(workspace_config, "rb") as f:
-            config_data = tomllib.load(f)
+
+        # Handle Python version compatibility for tomllib
+        if sys.version_info >= (3, 11):
+            import tomllib
+
+            with open(workspace_config, "rb") as f:
+                config_data = tomllib.load(f)
+        else:
+            # Fallback for Python < 3.11
+            pytest.skip("Python 3.11+ required for tomllib support")
+            return
 
         # Check workspace configuration
         if "tool" in config_data and "uv" in config_data["tool"]:
@@ -368,8 +376,6 @@ class TestCoolifyDeployment:
         production_workflow = workflows_dir / "production-deploy.yml"
 
         # Read and parse workflow configurations
-        import yaml
-
         with open(staging_workflow, "r") as f:
             staging_config = yaml.safe_load(f)
 
@@ -425,9 +431,19 @@ class TestCoolifyDeployment:
             if result.returncode == 0:
                 remote_branches = result.stdout
 
-                # Check for staging and main branches
-                has_staging = "staging" in remote_branches
-                has_main = "main" in remote_branches
+                # Check for staging and main branches with exact matching to prevent false positives
+                branch_lines = remote_branches.strip().split("\n")
+                has_staging = any(
+                    line.strip().endswith("/staging")
+                    or line.strip() == "origin/staging"
+                    for line in branch_lines
+                    if line.strip()
+                )
+                has_main = any(
+                    line.strip().endswith("/main") or line.strip() == "origin/main"
+                    for line in branch_lines
+                    if line.strip()
+                )
 
                 print(
                     f"  📍 Remote branches available: {has_main and 'main' or ''} {has_staging and 'staging' or ''}"
