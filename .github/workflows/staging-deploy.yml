@@ -2,7 +2,7 @@ name: Deploy to Staging
 
 on:
   push:
-    branches: [main]
+    branches: [staging]
 
 permissions:
   contents: read
@@ -38,7 +38,7 @@ jobs:
           echo "✅ External connectivity validated"
 
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
     needs: deployment-readiness
     runs-on: ubuntu-latest
     permissions:
