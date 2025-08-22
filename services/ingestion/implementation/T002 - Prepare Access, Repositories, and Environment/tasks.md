@@ -189,7 +189,7 @@
   - _Description: Configure HTTP-01 challenge for domain validation_
 
 - [x] **Task 2.6.5**: Create integration test for SSL certificate automation
-  - _File: `tests/integration/test_ssl_automation.py`_
+  - _File: `tests/integration/test_coolify_deployment.py`_
   - _Requirements: T002-FR07, T002-NR01_
   - _Description: Test certificate provisioning, renewal, and HTTPS functionality_
 
