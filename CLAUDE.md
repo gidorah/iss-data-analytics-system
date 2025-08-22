@@ -1,0 +1,3 @@
+  - Always create PRs against the staging branch (use --base staging)
+  - Never add signature to PR descriptions
+  - Follow the staged deployment flow: feature → staging → main

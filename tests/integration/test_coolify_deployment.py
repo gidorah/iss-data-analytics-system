@@ -11,7 +11,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 import pytest
 import requests
@@ -194,16 +194,22 @@ class TestCoolifyDeployment:
             pytest.fail(f"{environment.title()} service root endpoint test failed: {e}")
 
     def test_ssl_certificate_functionality(self):
-        """Test SSL certificate functionality for HTTPS endpoints"""
-        print("\n🔒 Testing SSL certificate functionality...")
+        """Test SSL certificate functionality and automation for HTTPS endpoints (Task 2.6.5)"""
+        print("\n🔒 Testing SSL certificate automation and functionality...")
 
         # Test both staging and production if HTTPS URLs are available
         test_urls = []
 
-        if self.STAGING_URL.startswith("http://") and "sslip.io" in self.STAGING_URL:
-            # Convert HTTP staging URL to HTTPS for SSL testing
-            https_staging_url = self.STAGING_URL.replace("http://", "https://")
-            test_urls.append(("staging", https_staging_url))
+        if self.STAGING_URL:
+            if self.STAGING_URL.startswith("http://"):
+                # Convert HTTP staging URL to HTTPS for SSL testing
+                https_staging_url = self._convert_to_https(self.STAGING_URL)
+                test_urls.append(("staging", https_staging_url))
+                # Also test HTTP to HTTPS redirect
+                self._test_https_redirect(self.STAGING_URL, "staging")
+            elif self.STAGING_URL.startswith("https://"):
+                # Already HTTPS, just test SSL certificate
+                test_urls.append(("staging", self.STAGING_URL))
 
         if self.PRODUCTION_URL and self.PRODUCTION_URL.startswith("https://"):
             test_urls.append(("production", self.PRODUCTION_URL))
@@ -213,6 +219,11 @@ class TestCoolifyDeployment:
 
         for environment, url in test_urls:
             self._test_ssl_certificate(url, environment)
+
+    def _convert_to_https(self, url: str) -> str:
+        """Convert HTTP URL to HTTPS using proper URL parsing"""
+        parsed = urlparse(url)
+        return urlunparse(parsed._replace(scheme="https"))
 
     def _test_ssl_certificate(self, url: str, environment: str):
         """Test SSL certificate for a specific URL"""
@@ -253,6 +264,40 @@ class TestCoolifyDeployment:
 
         except Exception as e:
             print(f"⚠️  SSL test failed for {environment}: {e}")
+
+    def _test_https_redirect(self, http_url: str, environment: str):
+        """Test HTTP to HTTPS redirect functionality (Coolify SSL automation)"""
+        try:
+            print(f"  🔀 Testing HTTP to HTTPS redirect for {environment}")
+
+            # Test redirect without following it initially
+            response = self.session.get(http_url, allow_redirects=False, timeout=10)
+
+            # Check for redirect response codes
+            if response.status_code in [301, 302, 307, 308]:
+                location = response.headers.get("location", "")
+                if location.startswith("https://"):
+                    print(f"✅ {environment.title()} HTTP to HTTPS redirect working")
+                    return
+                else:
+                    assert False, (
+                        f"{environment} redirects but not to HTTPS: {location}"
+                    )
+
+            # If no redirect, try following redirects and check final URL
+            response_with_redirects = self.session.get(http_url, timeout=10)
+            if response_with_redirects.url.startswith("https://"):
+                print(f"✅ {environment.title()} HTTPS enforced via redirects")
+            else:
+                assert False, (
+                    f"{environment} does not enforce HTTPS - final URL: {response_with_redirects.url}"
+                )
+
+        except AssertionError:
+            # Re-raise assertion errors to fail the test
+            raise
+        except Exception as e:
+            pytest.fail(f"HTTPS redirect test failed for {environment}: {e}")
 
     def test_deployment_configuration_integrity(self):
         """Validate deployment configuration integrity"""
