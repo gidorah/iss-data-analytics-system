@@ -2,6 +2,12 @@
 
 This module validates that the GitHub repository is properly configured with
 appropriate access controls, branch protection rules, and security settings.
+
+Separation of Concerns:
+- Positive access tests: tests/integration/test_repository_access.py (this file)
+- Negative security tests: tests/security/test_access_controls.py
+- Secrets infrastructure: tests/integration/test_secrets_management.py
+- Workflow permissions: tests/integration/test_github_actions.py
 """
 
 import os
@@ -160,12 +166,6 @@ class TestRepositoryAccess:
                                     pytest.fail(
                                         f"Potential sensitive data in {file_name}:{i + 1}: {line.strip()}"
                                     )
-
-
-class TestRepositoryAccessViolations:
-    """Test scenarios that should be blocked by access controls."""
-
-    REPO_NAME = "gidorah/iss-data-analytics-system"
 
 
 if __name__ == "__main__":
