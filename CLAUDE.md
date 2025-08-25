@@ -1,0 +1,4 @@
+  - Always create PRs against the staging branch (use --base staging)
+  - Never add signature to PR descriptions
+  - Follow the staged deployment flow: feature → staging → main
+  - All tests should validate OUR system, configuration, and code - never test established libraries or external platforms (e.g., don't test GitHub's API, test our repo config; don't test FastAPI's features, test our endpoints)
